@@ -23,7 +23,7 @@ void QStringScanner::match(Tokenizer& tokenizer)
     int ch;
 
     for (m_state = QStrState::Init; m_state != QStrState::Done; ) {
-        ch = tokenizer.get_char();
+        ch = tokenizer.peek();
         if (!ch) {
             break;
         }

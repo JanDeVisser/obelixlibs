@@ -4,19 +4,23 @@
  * SPDX-License-Identifier: MIT
  */
 
-//
-// Created by Jan de Visser on 2021-10-07.
-//
-
-//
-// Created by Jan de Visser on 2021-09-22.
-//
-
 #include <gtest/gtest.h>
 #include <lexer/Tokenizer.h>
 #include <lexer/test/LexerTest.h>
 
-TEST_F(LexerTest, tokenizer_lex_with_whitespace)
+class WhitespaceTest : public LexerTest {
+protected:
+
+    void initialize() override
+    {
+    }
+
+    bool debugOn() override {
+        return false;
+    }
+};
+
+TEST_F(WhitespaceTest, tokenizer_lex_with_whitespace)
 {
     add_scanner<Obelix::NumberScanner>();
     add_scanner<Obelix::IdentifierScanner>();
@@ -35,7 +39,7 @@ TEST_F(LexerTest, tokenizer_lex_with_whitespace)
         Obelix::TokenCode::EndOfFile);
 }
 
-TEST_F(LexerTest, tokenizer_whitespace_newline)
+TEST_F(WhitespaceTest, tokenizer_whitespace_newline)
 {
     add_scanner<Obelix::IdentifierScanner>();
     add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false, false });
@@ -52,7 +56,7 @@ TEST_F(LexerTest, tokenizer_whitespace_newline)
     EXPECT_EQ(tokens[3].value(), "\n");
 }
 
-TEST_F(LexerTest, Symbols)
+TEST_F(WhitespaceTest, Symbols)
 {
     add_scanner<Obelix::IdentifierScanner>();
     add_scanner<Obelix::WhitespaceScanner>(true);
@@ -71,7 +75,7 @@ TEST_F(LexerTest, Symbols)
     EXPECT_EQ(tokens[8].value(), "World");
 }
 
-TEST_F(LexerTest, TrailingWhitespace)
+TEST_F(WhitespaceTest, TrailingWhitespace)
 {
     add_scanner<Obelix::IdentifierScanner>();
     add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false, false });
@@ -89,7 +93,7 @@ TEST_F(LexerTest, TrailingWhitespace)
     EXPECT_EQ(tokens[3].value(), "  ");
 }
 
-TEST_F(LexerTest, IgnoreWS)
+TEST_F(WhitespaceTest, IgnoreWS)
 {
     add_scanner<Obelix::IdentifierScanner>();
     add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, true, false });
@@ -106,7 +110,7 @@ TEST_F(LexerTest, IgnoreWS)
         Obelix::TokenCode::EndOfFile);
 }
 
-TEST_F(LexerTest, IgnoreNL)
+TEST_F(WhitespaceTest, IgnoreNL)
 {
     add_scanner<Obelix::IdentifierScanner>();
     add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { true, false, false });
@@ -128,7 +132,7 @@ TEST_F(LexerTest, IgnoreNL)
         Obelix::TokenCode::EndOfFile);
 }
 
-TEST_F(LexerTest, IgnoreAllWS_newlines_are_not_spaces)
+TEST_F(WhitespaceTest, IgnoreAllWS_newlines_are_not_spaces)
 {
     add_scanner<Obelix::IdentifierScanner>();
     add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { true, true, false });
@@ -143,7 +147,7 @@ TEST_F(LexerTest, IgnoreAllWS_newlines_are_not_spaces)
         Obelix::TokenCode::EndOfFile);
 }
 
-TEST_F(LexerTest, IgnoreAllWS_newlines_are_spaces)
+TEST_F(WhitespaceTest, IgnoreAllWS_newlines_are_spaces)
 {
     add_scanner<Obelix::IdentifierScanner>();
     add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { true, true, true });
@@ -158,7 +162,7 @@ TEST_F(LexerTest, IgnoreAllWS_newlines_are_spaces)
         Obelix::TokenCode::EndOfFile);
 }
 
-TEST_F(LexerTest, IgnoreNoWhitespace)
+TEST_F(WhitespaceTest, IgnoreNoWhitespace)
 {
     add_scanner<Obelix::IdentifierScanner>();
     add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false, false });
@@ -182,7 +186,7 @@ TEST_F(LexerTest, IgnoreNoWhitespace)
         Obelix::TokenCode::EndOfFile);
 }
 
-TEST_F(LexerTest, IgnoreNoWhitespace_newlines_are_spaces)
+TEST_F(WhitespaceTest, IgnoreNoWhitespace_newlines_are_spaces)
 {
     add_scanner<Obelix::IdentifierScanner>();
     add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false, true });

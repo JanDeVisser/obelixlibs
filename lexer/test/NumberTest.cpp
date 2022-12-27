@@ -17,9 +17,6 @@ public:
     template <typename T>
     void check_number(std::string const& in, T const& out, Obelix::TokenCode code)
     {
-        add_scanner<Obelix::NumberScanner>(Obelix::NumberScanner::Config { true, false, true, true, true });
-        add_scanner<Obelix::IdentifierScanner>();
-        add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false });
         tokenize(Obelix::format("Foo = {}", in));
         check_codes(6,
             Obelix::TokenCode::Identifier,
@@ -31,6 +28,13 @@ public:
         Obelix::ErrorOr<T, Obelix::SyntaxError> value_or_error = Obelix::token_value<T>(tokens[4]);
         EXPECT_FALSE(value_or_error.is_error());
         EXPECT_EQ(value_or_error.value(), out);
+    }
+
+    void initialize() override
+    {
+        add_scanner<Obelix::NumberScanner>(Obelix::NumberScanner::Config { true, false, true, true, true });
+        add_scanner<Obelix::IdentifierScanner>();
+        add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false });
     }
 
     bool debugOn() override

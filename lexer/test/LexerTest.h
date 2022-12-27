@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-//
-// Created by Jan de Visser on 2021-10-07.
-//
-
 #pragma once
 
 #include <cstdarg>
@@ -17,21 +13,22 @@
 
 class LexerTest : public ::testing::Test {
 public:
-    Obelix::Lexer lexer;
+    Obelix::Lexer lexer {};
 
 protected:
     void SetUp() override {
         if (debugOn()) {
             Obelix::Logger::get_logger().enable("lexer");
         }
+        initialize();
     }
 
-    void initialize()
+    virtual void initialize()
     {
-        lexer = Obelix::Lexer();
-        lexer.add_scanner<Obelix::QStringScanner>();
-        lexer.add_scanner<Obelix::IdentifierScanner>();
-        lexer.add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false });
+        add_scanner<Obelix::QStringScanner>();
+        add_scanner<Obelix::NumberScanner>();
+        add_scanner<Obelix::IdentifierScanner>();
+        add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false, false });
     }
 
     void tokenize(std::string const& s)
@@ -42,11 +39,14 @@ protected:
     void tokenize(char const* text = nullptr)
     {
         tokens = lexer.tokenize(text);
+//        std::cout << tokens.size() << " tokens: ";
         for (auto& token : tokens) {
+//            std::cout << TokenCode_name(token.code()) << " ";
             auto tokens_for = tokens_by_code[token.code()];
             tokens_for.push_back(token);
             tokens_by_code[token.code()] = tokens_for;
         }
+//        std::cout << "\n";
     }
 
     void check_codes(size_t count, ...)

@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-//
-// Created by Jan de Visser on 2021-10-07.
-//
-
 #include <gtest/gtest.h>
 #include <lexer/Tokenizer.h>
 #include <lexer/test/LexerTest.h>
@@ -60,7 +56,7 @@ protected:
     }
 
     bool debugOn() override {
-        return true;
+        return false;
     }
 
 };

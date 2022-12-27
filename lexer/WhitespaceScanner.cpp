@@ -32,51 +32,30 @@ WhitespaceScanner::WhitespaceScanner(bool ignore_all_ws)
     }
 }
 
-void WhitespaceScanner::match(Tokenizer& tokenizer)
-{
-    for (m_state = WhitespaceState::Init; m_state != WhitespaceState::Done; ) {
-        auto ch = tokenizer.get_char();
-        if (ch == '\n') {
-            if (!m_config.newlines_are_spaces) {
-                if (m_state == WhitespaceState::Whitespace) {
-                    if (m_config.ignore_spaces) {
-                        tokenizer.skip();
-                    } else {
-                        tokenizer.accept(TokenCode::Whitespace);
-                    }
-                }
+void WhitespaceScanner::match(Tokenizer& tokenizer) {
+    int ch;
 
-                tokenizer.push_as('\n');
-                if (m_config.ignore_newlines) {
+    for (m_state = WhitespaceState::Init, ch = tokenizer.peek();
+         ch && m_state != WhitespaceState::Done; ch = tokenizer.peek()) {
+#if 0
+        if ((ch == '\n' || ch == '\r') && !m_config.newlines_are_spaces) {
+            if (m_state == WhitespaceState::Whitespace) {
+                if (m_config.ignore_spaces) {
                     tokenizer.skip();
                 } else {
-                    tokenizer.accept(TokenCode::NewLine);
+                    tokenizer.accept(TokenCode::Whitespace);
                 }
-                m_state = WhitespaceState::Done;
-                continue;
             }
-        }
-
-        switch (m_state) {
-        case WhitespaceState::Init:
-            if (isspace(ch)) {
-                if (ch == '\r') {
-                    m_state = (m_config.newlines_are_spaces) ? WhitespaceState::Whitespace : WhitespaceState::CR;
-                } else {
-                    m_state = WhitespaceState::Whitespace;
-                }
-                tokenizer.push();
-            } else {
-                m_state = WhitespaceState::Done;
-            }
-            break;
-
-        case WhitespaceState::CR:
             if (ch == '\r') {
-                if (m_config.newlines_are_spaces) {
+                ch = tokenizer.peek(1);
+                if (ch == '\n') {
+                    tokenizer.discard();
                     tokenizer.push();
-                    break;
+                } else {
+                    tokenizer.push_as('\n');
                 }
+            } else {
+                tokenizer.push();
             }
             if (m_config.ignore_newlines) {
                 tokenizer.skip();
@@ -84,22 +63,95 @@ void WhitespaceScanner::match(Tokenizer& tokenizer)
                 tokenizer.accept(TokenCode::NewLine);
             }
             m_state = WhitespaceState::Done;
-            break;
-
-        case WhitespaceState::Whitespace:
-            if (isspace(ch)) {
-                tokenizer.push();
-            } else {
-                if (m_config.ignore_spaces) {
-                    tokenizer.skip();
+            continue;
+        }
+#endif
+        switch (m_state) {
+            case WhitespaceState::Init:
+                if (isspace(ch)) {
+                    if (ch == '\r' || ch == '\n') {
+                        if (!m_config.newlines_are_spaces) {
+                            if (ch == '\r') {
+                                ch = tokenizer.peek(1);
+                                if (ch == '\n') {
+                                    tokenizer.discard();
+                                    tokenizer.push();
+                                } else {
+                                    tokenizer.push_as('\n');
+                                }
+                            } else {
+                                tokenizer.push();
+                            }
+                            if (m_config.ignore_newlines) {
+                                tokenizer.skip();
+                            } else {
+                                tokenizer.accept(TokenCode::NewLine);
+                            }
+                            m_state = WhitespaceState::Done;
+                        } else {
+                            tokenizer.push();
+                            m_state = WhitespaceState::Whitespace;
+                        }
+                    } else {
+                        tokenizer.push();
+                        m_state = WhitespaceState::Whitespace;
+                    }
                 } else {
-                    tokenizer.accept(TokenCode::Whitespace);
+                    m_state = WhitespaceState::Done;
                 }
-                m_state = WhitespaceState::Done;
-            }
-            break;
-        default:
-            break;
+                break;
+            case WhitespaceState::Whitespace:
+                if (isspace(ch)) {
+                    if (ch == '\r' || ch == '\n') {
+                        if (!m_config.newlines_are_spaces) {
+                            if (m_config.ignore_spaces) {
+                                tokenizer.skip();
+                            } else {
+                                tokenizer.accept(TokenCode::Whitespace);
+                            }
+                            if (ch == '\r') {
+                                ch = tokenizer.peek(1);
+                                if (ch == '\n') {
+                                    tokenizer.discard();
+                                    tokenizer.push();
+                                } else {
+                                    tokenizer.push_as('\n');
+                                }
+                            } else {
+                                tokenizer.push();
+                            }
+                            if (m_config.ignore_newlines) {
+                                tokenizer.skip();
+                            } else {
+                                tokenizer.accept(TokenCode::NewLine);
+                            }
+                            m_state = WhitespaceState::Done;
+                        } else {
+                            tokenizer.push();
+                            m_state = WhitespaceState::Whitespace;
+                        }
+                    } else {
+                        tokenizer.push();
+                        m_state = WhitespaceState::Whitespace;
+                    }
+                } else {
+                    if (m_config.ignore_spaces) {
+                        tokenizer.skip();
+                    } else {
+                        tokenizer.accept(TokenCode::Whitespace);
+                    }
+                    m_state = WhitespaceState::Done;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    if (!ch && m_state == WhitespaceState::Whitespace) {
+        if (m_config.ignore_spaces) {
+            tokenizer.skip();
+        } else {
+            tokenizer.accept(TokenCode::Whitespace);
         }
     }
 }

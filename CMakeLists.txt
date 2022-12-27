@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
-project(obelixlibs)
+project(obelixlibs LANGUAGES CXX VERSION 1.0.0.0)
 
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0115 NEW)
-#cmake_policy(SET CMP0135 NEW)
+cmake_policy(SET CMP0135 NEW)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -12,7 +12,7 @@ set(CMAKE_CXX_FLAGS "-Wall")
 
 set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR})
 
-include_directories("${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}")
+include_directories("${obelixlibs_SOURCE_DIR}/src" "${obelixlibs_SOURCE_DIR}")
 add_subdirectory(lexer)
 add_subdirectory(core)
 

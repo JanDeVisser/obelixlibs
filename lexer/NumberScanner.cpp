@@ -186,7 +186,7 @@ void NumberScanner::match(Tokenizer& tokenizer)
 
     for (m_state = NumberScannerState::None;
          (m_state != NumberScannerState::Done) && (m_state != NumberScannerState::Error);) {
-        ch = tolower(tokenizer.get_char());
+        ch = tolower(tokenizer.peek());
         code = process(tokenizer, ch);
     }
     if (m_state == NumberScannerState::Error) {

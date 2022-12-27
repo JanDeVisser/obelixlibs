@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-//
-// Created by Jan de Visser on 2021-10-05.
-//
-
 #include <lexer/Tokenizer.h>
 
 namespace Obelix {
@@ -26,9 +22,8 @@ IdentifierScanner::IdentifierScanner(Config config)
 bool IdentifierScanner::filter_character(Tokenizer& tokenizer, int ch) const {
     bool ret;
 
-    if (!ch) {
+    if (!ch)
         return false;
-    }
 
     auto filter_against = [ch](auto filter_against, auto alpha_class, auto digits_allowed) {
         if (isalpha(ch)) {
@@ -62,7 +57,7 @@ void IdentifierScanner::match(Tokenizer& tokenizer)
     int ch;
     bool identifier_found { false };
 
-    for (ch = tokenizer.get_char(); filter_character(tokenizer, ch); ch = tokenizer.get_char()) {
+    for (ch = tokenizer.peek(); filter_character(tokenizer, ch); ch = tokenizer.peek()) {
         identifier_found = true;
         switch (m_config.alpha) {
         case IdentifierCharacterClass::CaseSensitive:

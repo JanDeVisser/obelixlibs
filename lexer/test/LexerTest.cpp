@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-//
-// Created by Jan de Visser on 2021-09-22.
-//
-
 #include <gtest/gtest.h>
 #include <lexer/Tokenizer.h>
 #include <lexer/test/LexerTest.h>
@@ -21,18 +17,66 @@ TEST(TokenizerTest, tokenizer_create)
     EXPECT_EQ(tokenizer.state(), Obelix::TokenizerState::Fresh);
 }
 
-TEST_F(LexerTest, lexer_lex)
+class SimpleLexerTest : public LexerTest {
+protected:
+
+    void initialize() override
+    {
+        add_scanner<Obelix::IdentifierScanner>();
+        add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false, false });
+    }
+
+    bool debugOn() override {
+        return false;
+    }
+};
+
+TEST_F(SimpleLexerTest, SimplestTest)
 {
-    add_scanner<Obelix::NumberScanner>();
-    add_scanner<Obelix::IdentifierScanner>();
-    add_scanner<Obelix::WhitespaceScanner>();
-    tokenize("1 + 2 + a");
-    check_codes(6,
-        Obelix::TokenCode::Integer,
-        Obelix::TokenCode::Plus,
-        Obelix::TokenCode::Integer,
-        Obelix::TokenCode::Plus,
+    tokenize("A");
+    check_codes(2,
         Obelix::TokenCode::Identifier,
         Obelix::TokenCode::EndOfFile);
-    EXPECT_EQ(tokens[4].value(), "a");
+    EXPECT_EQ(tokens[0].value(), "A");
+}
+
+TEST_F(SimpleLexerTest, SimpleTest1)
+{
+    tokenize("A ");
+    check_codes(3,
+        Obelix::TokenCode::Identifier,
+        Obelix::TokenCode::Whitespace,
+        Obelix::TokenCode::EndOfFile);
+    EXPECT_EQ(tokens[0].value(), "A");
+    EXPECT_EQ(tokens[1].value(), " ");
+}
+
+TEST_F(SimpleLexerTest, SimpleTest2)
+{
+    tokenize("A B");
+    check_codes(4,
+            Obelix::TokenCode::Identifier,
+            Obelix::TokenCode::Whitespace,
+            Obelix::TokenCode::Identifier,
+            Obelix::TokenCode::EndOfFile);
+    EXPECT_EQ(tokens[0].value(), "A");
+    EXPECT_EQ(tokens[1].value(), " ");
+    EXPECT_EQ(tokens[2].value(), "B");
+}
+
+TEST_F(LexerTest, lexer_lex)
+{
+    tokenize("1 + 2 + a");
+    check_codes(10,
+        Obelix::TokenCode::Integer,
+        Obelix::TokenCode::Whitespace,
+        Obelix::TokenCode::Plus,
+        Obelix::TokenCode::Whitespace,
+        Obelix::TokenCode::Integer,
+        Obelix::TokenCode::Whitespace,
+        Obelix::TokenCode::Plus,
+        Obelix::TokenCode::Whitespace,
+        Obelix::TokenCode::Identifier,
+        Obelix::TokenCode::EndOfFile);
+    EXPECT_EQ(tokens[8].value(), "a");
 }

@@ -354,7 +354,7 @@ inline ErrorOr<T, SyntaxError> token_value(Token const& token)
     fatal("Specialize token_value<T>(Token const&) for T = {}", typeid(T).name());
 }
 
-template<std::convertible_to<long> T>
+template<std::integral T>
 inline ErrorOr<T, SyntaxError> token_value(Token const& token)
 {
     if (token.code() != TokenCode::Float && token.code() != TokenCode::Integer && token.code() != TokenCode::HexNumber)
@@ -362,6 +362,17 @@ inline ErrorOr<T, SyntaxError> token_value(Token const& token)
     auto v = to_long_unconditional(token.value());
     if (v < std::numeric_limits<T>::min() || v > std::numeric_limits<T>::max())
         return SyntaxError { token.location(), "Long value {} overflows {}", v, typeid(T).name() };
+    return static_cast<T>(v);
+}
+
+template<std::floating_point T>
+inline ErrorOr<T, SyntaxError> token_value(Token const& token)
+{
+    if (token.code() != TokenCode::Float && token.code() != TokenCode::Integer && token.code() != TokenCode::HexNumber)
+        return SyntaxError { token.location(), "Cannot get {} value as {}", token.code(), typeid(T).name() };
+    auto v = to_double_unconditional(token.value());
+    if (v < std::numeric_limits<T>::min() || v > std::numeric_limits<T>::max())
+        return SyntaxError { token.location(), "Float value {} overflows {}", v, typeid(T).name() };
     return static_cast<T>(v);
 }
 

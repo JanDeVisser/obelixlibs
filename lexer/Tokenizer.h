@@ -113,8 +113,9 @@ public:
 
     std::vector<Token> const& tokenize(std::optional<std::string_view const> = {});
 
-    int get_char();
+    [[nodiscard]] int peek(int num = 0);
     void discard();
+    [[nodiscard]] std::string const& current_token() const;
     Token accept(TokenCode);
     Token accept_token(TokenCode, std::string);
     Token accept_token(Token&);
@@ -129,7 +130,11 @@ public:
     void reset();
     void rewind();
     void partial_rewind(size_t);
-    Token get_accept(TokenCode, int);
+
+    void add_scanners(std::set<std::shared_ptr<Scanner>>);
+    std::shared_ptr<Scanner> get_scanner(std::string const&);
+    void lock_scanner();
+    void unlock_scanner();
 
     template<class ScannerClass, class... Args>
     std::shared_ptr<ScannerClass> add_scanner(Args&&... args)
@@ -137,21 +142,6 @@ public:
         auto ret = std::make_shared<ScannerClass>(std::forward<Args>(args)...);
         m_scanners.insert(std::dynamic_pointer_cast<Scanner>(ret));
         return ret;
-    }
-
-    void add_scanners(std::set<std::shared_ptr<Scanner>> scanners)
-    {
-        m_scanners.merge(scanners);
-    }
-
-    std::shared_ptr<Scanner> get_scanner(std::string const& name)
-    {
-        for (auto& scanner : m_scanners) {
-            if (scanner->name() == name) {
-                return scanner;
-            }
-        }
-        return nullptr;
     }
 
 private:
@@ -171,13 +161,12 @@ private:
     std::string m_token {};
     TokenizerState m_state { TokenizerState::Fresh };
     std::vector<Token> m_tokens {};
-    size_t m_scanned { 0 };
-    size_t m_consumed { 0 };
-    size_t m_total_count { 0 };
     bool m_prev_was_cr { false };
     int m_current { 0 };
     Span m_location { {}, 1, 1, 1, 1 };
     bool m_eof { false };
+    std::shared_ptr<Scanner> m_current_scanner;
+    std::shared_ptr<Scanner> m_locked_scanner { nullptr };
 };
 
 #define ENUMERATE_QSTR_STATES(S) \
@@ -209,7 +198,6 @@ private:
 #define ENUMERATE_WS_STATES(S) \
     S(Init)                    \
     S(Whitespace)              \
-    S(CR)                      \
     S(Done)
 
 class WhitespaceScanner : public Scanner {
@@ -241,6 +229,7 @@ private:
     S(None)                         \
     S(StartMarker)                  \
     S(Text)                         \
+    S(NewLine)                      \
     S(EndMarker)                    \
     S(End)                          \
     S(Unterminated)
@@ -279,17 +268,24 @@ public:
     explicit CommentScanner(Args&&... args)
         : Scanner()
     {
-        add_markers(std::forward<Args>(args)...);
+        configure(std::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args>
-    void add_markers(T t, Args&&... args)
+    void configure(T t, Args&&... args)
     {
         add_marker(t);
-        add_markers(std::forward<Args>(args)...);
+        configure(std::forward<Args>(args)...);
     }
 
-    void add_markers() { }
+    template<typename... Args>
+    void configure(bool split_by_lines, Args&&... args)
+    {
+        m_split_by_lines = split_by_lines;
+        configure(std::forward<Args>(args)...);
+    }
+
+    void configure() { }
 
     void add_marker(CommentMarker marker)
     {
@@ -314,11 +310,12 @@ private:
     void find_end_marker(Tokenizer&);
 
     std::vector<CommentMarker> m_markers {};
+    bool m_split_by_lines { false };
+
     CommentState m_state { CommentState::None };
     std::vector<bool> m_matched;
     size_t m_num_matches { 0 };
     CommentMarker* m_match { nullptr };
-    std::string m_token {};
 };
 
 #define ENUMERATE_NUMBER_SCANNER_STATES(S) \

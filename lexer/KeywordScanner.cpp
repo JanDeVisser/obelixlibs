@@ -151,9 +151,9 @@ void KeywordScanner::match(Tokenizer& tokenizer)
 
     reset();
     bool carry_on { true };
-    for (int ch = tokenizer.get_char();
+    for (int ch = tokenizer.peek();
          ch && carry_on;
-         ch = tokenizer.get_char()) {
+         ch = tokenizer.peek()) {
         match_character(ch);
 
         carry_on = false;
