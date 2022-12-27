@@ -22,6 +22,8 @@ public:
     void reset();
     void partial_rewind(size_t);
     void pushback();
+    [[nodiscard]] size_t scanned() const { return m_pos - m_mark; }
+    [[nodiscard]] std::string scanned_string() const;
     std::string read(size_t);
     [[nodiscard]] int peek(size_t = 0) const;
     int one_of(std::string const&);

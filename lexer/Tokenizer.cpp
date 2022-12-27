@@ -28,13 +28,13 @@ private:
 
 Tokenizer::Tokenizer(std::string_view const& text, std::string file_name)
     : m_buffer(text)
-    , m_location { std::move(file_name), 1, 1, 1, 1 }
+    , m_file_name(std::move(file_name))
 {
 }
 
 Tokenizer::Tokenizer(StringBuffer text, std::string file_name)
     : m_buffer(std::move(text))
-    , m_location { std::move(file_name), 1, 1, 1, 1 }
+    , m_file_name(std::move(file_name))
 {
 }
 
@@ -133,8 +133,6 @@ void Tokenizer::rewind()
     debug(lexer, "Rewinding tokenizer");
     m_token = "";
     m_buffer.rewind();
-    m_location.end_line = m_location.start_line;
-    m_location.end_column = m_location.start_column;
 }
 
 void Tokenizer::partial_rewind(size_t num)
@@ -146,9 +144,6 @@ void Tokenizer::partial_rewind(size_t num)
     else
         m_token = "";
     m_buffer.partial_rewind(num);
-
-    // FIXME doesn't work if we're rewinding over a linebreak
-    m_location.end_column -= num;
 }
 
 /**
@@ -156,11 +151,21 @@ void Tokenizer::partial_rewind(size_t num)
  */
 void Tokenizer::reset() {
     debug(lexer, "Resetting tokenizer");
+    auto scanned = m_buffer.scanned_string();
+    for (auto ix = 0u; ix < scanned.length(); ++ix) {
+        auto ch = m_token[ix];
+        if (ch == '\r' &&ix < scanned.length()-1 && scanned[ix+1] == '\n') {
+            ch = scanned[++ix];
+        }
+        if (ch == '\n' || ch == '\r') {
+            m_mark.line++;
+            m_mark.column = 1;
+        } else {
+            m_mark.column++;
+        }
+    }
     m_buffer.reset();
     m_token = "";
-    m_prev_was_cr = false;
-    m_location.start_line = m_location.end_line;
-    m_location.start_column = m_location.end_column;
 }
 
 std::string const& Tokenizer::current_token() const
@@ -181,10 +186,12 @@ Token Tokenizer::accept_token(TokenCode code, std::string value)
 
 Token Tokenizer::accept_token(Token& token)
 {
-    token.location(m_location);
+    auto mark = m_mark;
     skip();
+    // reset(), and therefore skip(), sets the mark to the
+    // current point:
+    token.location(Span { m_file_name, mark, m_mark });
     debug(lexer, "Lexer::accept_token({})", token.to_string());
-    m_state = TokenizerState::Success;
     if (!m_filtered_codes.contains(token.code()))
         m_tokens.push_back(token);
     return token;
@@ -201,44 +208,15 @@ void Tokenizer::push() {
 }
 
 void Tokenizer::push_as(int ch) {
-    m_location.end_column++;
     m_buffer.readchar();
     if (ch)
         m_token += (char) ch;
-    if ((m_current == '\n') || m_prev_was_cr) {
-        m_location.end_line++;
-        m_location.end_column = 1;
-    }
-    m_prev_was_cr = (m_current == '\r');
     m_current = 0;
 }
 
 void Tokenizer::discard() {
     push_as(0);
 }
-
-#if 0
-int Tokenizer::get_char()
-{
-    if (m_eof)
-        return 0;
-    m_current = m_buffer.readchar();
-    if (m_current <= 0) {
-        debug(lexer, "EOF reached");
-        m_eof = true;
-        m_current = 0;
-        return 0;
-    }
-    if ((m_current == '\n') || m_prev_was_cr) {
-        m_location.end_line++;
-        m_location.end_column = 1;
-    }
-    m_prev_was_cr = (m_current == '\r');
-    m_scanned++;
-    debug(lexer, "get_char() = {}", m_current);
-    return m_current;
-}
-#endif
 
 int Tokenizer::peek(int num)
 {

@@ -38,6 +38,10 @@ TEST_F(SimpleLexerTest, SimplestTest)
         Obelix::TokenCode::Identifier,
         Obelix::TokenCode::EndOfFile);
     EXPECT_EQ(tokens[0].value(), "A");
+    EXPECT_EQ(tokens[0].location().start.line, 1);
+    EXPECT_EQ(tokens[0].location().start.column, 1);
+    EXPECT_EQ(tokens[0].location().end.line, 1);
+    EXPECT_EQ(tokens[0].location().end.column, 2);
 }
 
 TEST_F(SimpleLexerTest, SimpleTest1)
@@ -49,6 +53,8 @@ TEST_F(SimpleLexerTest, SimpleTest1)
         Obelix::TokenCode::EndOfFile);
     EXPECT_EQ(tokens[0].value(), "A");
     EXPECT_EQ(tokens[1].value(), " ");
+    EXPECT_EQ(tokens[0].location(), Obelix::Span("", 1, 1, 1, 2 ));
+    EXPECT_EQ(tokens[1].location(), Obelix::Span("", 1, 2, 1, 3 ));
 }
 
 TEST_F(SimpleLexerTest, SimpleTest2)

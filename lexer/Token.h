@@ -141,17 +141,17 @@ namespace Obelix {
     S(Keyword59, nullptr, nullptr)
 
 enum class TokenCode {
-#undef __ENUMERATE_TOKEN_CODE
-#define __ENUMERATE_TOKEN_CODE(code, c, str) code,
-    ENUMERATE_TOKEN_CODES(__ENUMERATE_TOKEN_CODE)
-#undef __ENUMERATE_TOKEN_CODE
+#undef ENUM_TOKEN_CODE
+#define ENUM_TOKEN_CODE(code, c, str) code,
+    ENUMERATE_TOKEN_CODES(ENUM_TOKEN_CODE)
+#undef ENUM_TOKEN_CODE
         count
 };
 
 constexpr TokenCode TokenCode_by_char(int ch)
 {
-#undef __ENUMERATE_TOKEN_CODE
-#define __ENUMERATE_TOKEN_CODE(code, c, str)                                    \
+#undef ENUM_TOKEN_CODE
+#define ENUM_TOKEN_CODE(code, c, str)                                    \
     {                                                                           \
         if (c != nullptr) {                                                     \
             char const* c_str = c;                                              \
@@ -160,15 +160,15 @@ constexpr TokenCode TokenCode_by_char(int ch)
             }                                                                   \
         }                                                                       \
     }
-    ENUMERATE_TOKEN_CODES(__ENUMERATE_TOKEN_CODE)
-#undef __ENUMERATE_TOKEN_CODE
+    ENUMERATE_TOKEN_CODES(ENUM_TOKEN_CODE)
+#undef ENUM_TOKEN_CODE
     return TokenCode::Unknown;
 }
 
 inline TokenCode TokenCode_by_string(char const* str)
 {
-#undef __ENUMERATE_TOKEN_CODE
-#define __ENUMERATE_TOKEN_CODE(code, c, s)   \
+#undef ENUM_TOKEN_CODE
+#define ENUM_TOKEN_CODE(code, c, s)   \
     {                                        \
         if (c != nullptr) {                  \
             char const* c_str = c;           \
@@ -178,20 +178,20 @@ inline TokenCode TokenCode_by_string(char const* str)
             }                                \
         }                                    \
     }
-    ENUMERATE_TOKEN_CODES(__ENUMERATE_TOKEN_CODE)
-#undef __ENUMERATE_TOKEN_CODE
+    ENUMERATE_TOKEN_CODES(ENUM_TOKEN_CODE)
+#undef ENUM_TOKEN_CODE
     return TokenCode::Unknown;
 }
 
 constexpr char const* TokenCode_to_string(TokenCode code)
 {
     switch (code) {
-#undef __ENUMERATE_TOKEN_CODE
-#define __ENUMERATE_TOKEN_CODE(code, c, str) \
+#undef ENUM_TOKEN_CODE
+#define ENUM_TOKEN_CODE(code, c, str) \
     case TokenCode::code:                    \
         return (c != nullptr) ? c : str;
-        ENUMERATE_TOKEN_CODES(__ENUMERATE_TOKEN_CODE)
-#undef __ENUMERATE_TOKEN_CODE
+        ENUMERATE_TOKEN_CODES(ENUM_TOKEN_CODE)
+#undef ENUM_TOKEN_CODE
     default:
         return "Custom";
     }
@@ -217,34 +217,41 @@ struct Converter<TokenCode> {
     }
 };
 
-struct Span {
-    std::string file_name;
-    size_t start_line;
-    size_t start_column;
-    size_t end_line;
-    size_t end_column;
+struct Location {
+    size_t line { 0 };
+    size_t column { 0 };
+
+    bool operator==(Location const& other) const
+    {
+        return line == other.line && column == other.column;
+    }
+
+    bool operator<(Location const& other) const
+    {
+        if (line == other.line)
+            return column < other.column;
+        return line < other.line;
+    }
 
     [[nodiscard]] std::string to_string() const
     {
-        if (!empty()) {
-            return (!file_name.empty())
-                ? format("{}:{}:{}-{}:{}:", file_name, start_line, start_column, end_line, end_column)
-                : format("{}:{}-{}:{}", start_line, start_column, end_line, end_column);
-        } else {
-            return format("{}:", file_name);
-        }
+        return format("{}:{}", line, column);
     }
+};
 
+struct Span {
+    std::string file_name;
+    Location start;
+    Location end;
+
+    Span() = default;
+    Span(std::string, Location const&, Location const&);
+    Span(std::string, size_t, size_t, size_t, size_t);
+
+    [[nodiscard]] std::string to_string() const;
     [[nodiscard]] Span merge(Span const&) const;
-    [[nodiscard]] bool empty() const
-    {
-        return (start_line == end_line) && (start_column == end_column);
-    }
-
-    bool operator==(Span const& other) const
-    {
-        return file_name == other.file_name && start_line == other.start_line && end_line == other.end_line && start_column == other.start_column && end_column == other.end_column;
-    }
+    [[nodiscard]] bool empty() const;
+    bool operator==(Span const& other) const;
 };
 
 class Token {

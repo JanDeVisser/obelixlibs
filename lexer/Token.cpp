@@ -11,33 +11,68 @@ namespace Obelix {
 std::string TokenCode_name(TokenCode t)
 {
     switch (t) {
-#undef __ENUMERATE_TOKEN_CODE
-#define __ENUMERATE_TOKEN_CODE(code, c, str) \
+#undef ENUM_TOKEN_CODE
+#define ENUM_TOKEN_CODE(code, c, str) \
     case TokenCode::code:                    \
         if (str != nullptr)                  \
             return str;                      \
         return #code;
-        ENUMERATE_TOKEN_CODES(__ENUMERATE_TOKEN_CODE)
-#undef __ENUMERATE_TOKEN_CODE
+        ENUMERATE_TOKEN_CODES(ENUM_TOKEN_CODE)
+#undef ENUM_TOKEN_CODE
     default:
         return format("Custom ({})", (int)t);
     }
 }
 
+Span::Span(std::string fname, Location const& loc_1, Location const& loc_2)
+    : file_name(std::move(fname))
+    , start({std::min(loc_1.line, loc_2.line), std::min(loc_1.column, loc_2.column) })
+    , end({std::max(loc_1.line, loc_2.line), std::max(loc_1.column, loc_2.column) })
+{
+}
+
+Span::Span(std::string fname, size_t line_1, size_t col_1, size_t line_2, size_t col_2)
+    : file_name(std::move(fname))
+    , start({ std::min(line_1, line_2), std::min(col_1, col_2) })
+    , end({ std::max(line_1, line_2), std::max(col_1, col_2) })
+{
+}
+
+std::string Span::to_string() const
+{
+    if (!empty()) {
+        return (!file_name.empty())
+            ? format("{}:{}-{}", file_name, start, end)
+            : format("{}-{}", start, end);
+    } else {
+        return format("{}:", file_name);
+    }
+}
+
+[[nodiscard]] bool Span::empty() const
+{
+    return start == end;
+}
+
+bool Span::operator==(Span const& other) const
+{
+    return file_name == other.file_name && start == other.start && end == other.end;
+}
+
 Span Span::merge(Span const& other) const
 {
-    size_t new_start_line = start_line;
-    if (other.start_line < new_start_line)
-        new_start_line = other.start_line;
-    size_t new_end_line = end_line;
-    if (other.end_line > new_end_line)
-        new_end_line = other.end_line;
-    size_t new_start_column = start_column;
-    if (other.start_column < new_start_column)
-        new_start_column = other.start_column;
-    size_t new_end_column = end_column;
-    if (other.end_column > new_end_column)
-        new_end_column = other.end_column;
+    size_t new_start_line = start.line;
+    if (other.start.line < new_start_line)
+        new_start_line = other.start.line;
+    size_t new_end_line = end.line;
+    if (other.end.line > new_end_line)
+        new_end_line = other.end.line;
+    size_t new_start_column = start.column;
+    if (other.start.column < new_start_column)
+        new_start_column = other.start.column;
+    size_t new_end_column = end.column;
+    if (other.end.column > new_end_column)
+        new_end_column = other.end.column;
     return Span { file_name, new_start_line, new_start_column, new_end_line, new_end_column };
 }
 

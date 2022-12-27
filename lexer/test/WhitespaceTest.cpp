@@ -108,6 +108,14 @@ TEST_F(WhitespaceTest, IgnoreWS)
         Obelix::TokenCode::Identifier,
         Obelix::TokenCode::Identifier,
         Obelix::TokenCode::EndOfFile);
+    EXPECT_EQ(tokens[0].location().to_string(), Obelix::Span("", 1, 2, 1, 7).to_string());
+    EXPECT_EQ(tokens[1].location().to_string(), Obelix::Span("", 1, 9, 1, 14).to_string());
+    EXPECT_EQ(tokens[2].location().to_string(), Obelix::Span("", 1, 14, 2, 1).to_string());
+    EXPECT_EQ(tokens[3].location().to_string(), Obelix::Span("", 2, 1, 2, 7).to_string());
+    EXPECT_EQ(tokens[4].location().to_string(), Obelix::Span("", 2, 8, 2, 12).to_string());
+    EXPECT_EQ(tokens[5].location().to_string(), Obelix::Span("", 2, 13, 3, 1).to_string());
+    EXPECT_EQ(tokens[6].location().to_string(), Obelix::Span("", 3, 2, 3, 7).to_string());
+    EXPECT_EQ(tokens[7].location().to_string(), Obelix::Span("", 3, 8, 3, 12).to_string());
 }
 
 TEST_F(WhitespaceTest, IgnoreNL)

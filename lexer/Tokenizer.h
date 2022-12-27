@@ -161,10 +161,9 @@ private:
     std::string m_token {};
     TokenizerState m_state { TokenizerState::Fresh };
     std::vector<Token> m_tokens {};
-    bool m_prev_was_cr { false };
     int m_current { 0 };
-    Span m_location { {}, 1, 1, 1, 1 };
-    bool m_eof { false };
+    std::string m_file_name;
+    Location m_mark { 1, 1 };
     std::shared_ptr<Scanner> m_current_scanner;
     std::shared_ptr<Scanner> m_locked_scanner { nullptr };
 };

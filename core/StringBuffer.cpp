@@ -85,6 +85,11 @@ std::string StringBuffer::read(size_t num)
     }
 }
 
+std::string StringBuffer::scanned_string() const
+{
+    return m_buffer.substr(m_mark, m_pos-m_mark);
+}
+
 int StringBuffer::peek(size_t num) const
 {
     return ((m_pos + num) < m_buffer.length()) ? m_buffer[m_pos + num] : 0;
