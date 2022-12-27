@@ -19,7 +19,9 @@ public:
     [[nodiscard]] std::string const& str() const { return m_buffer; }
     [[nodiscard]] operator std::string_view() const { return std::string_view(m_buffer); }
     void rewind();
+    void reset();
     void partial_rewind(size_t);
+    void pushback();
     std::string read(size_t);
     [[nodiscard]] int peek(size_t = 0) const;
     int one_of(std::string const&);
@@ -29,8 +31,8 @@ public:
     bool expect_one_of(std::string const&, size_t = 0);
     int readchar();
     void skip(size_t = 1);
-    void pushback(size_t = 1);
-    void reset();
+    [[nodiscard]] bool top() const;
+    [[nodiscard]] bool eof() const;
     StringBuffer& assign(char const*);
     StringBuffer& assign(std::string);
     StringBuffer& assign(StringBuffer);
@@ -38,6 +40,7 @@ public:
 private:
     std::string m_buffer;
     size_t m_pos { 0 };
+    size_t m_mark { 0 };
 };
 
 }

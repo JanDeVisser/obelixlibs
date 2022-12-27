@@ -50,19 +50,30 @@ StringBuffer& StringBuffer::assign(StringBuffer buffer)
 
 void StringBuffer::rewind()
 {
-    m_pos = 0;
+    m_pos = m_mark;
+}
+
+void StringBuffer::reset()
+{
+    m_mark = m_pos;
 }
 
 void StringBuffer::partial_rewind(size_t num)
 {
-    if (num > m_pos)
-        num = m_pos;
+    if (num > (m_pos - m_mark))
+        num = (m_pos - m_mark);
     m_pos -= num;
+}
+
+void StringBuffer::pushback()
+{
+    if (m_pos > m_mark)
+        m_pos--;
 }
 
 std::string StringBuffer::read(size_t num)
 {
-    if ((num < 0) || ((m_pos + num) > m_buffer.length())) {
+    if ((m_pos + num) > m_buffer.length()) {
         num = m_buffer.length() - m_pos;
     }
     if (num > 0) {
@@ -84,6 +95,16 @@ int StringBuffer::readchar()
     auto ret = peek();
     m_pos++;
     return ret;
+}
+
+bool StringBuffer::top() const
+{
+    return m_pos == 0;
+}
+
+bool StringBuffer::eof() const
+{
+    return m_pos >= m_buffer.length();
 }
 
 void StringBuffer::skip(size_t num)
@@ -116,12 +137,7 @@ bool StringBuffer::expect(std::string const& str, size_t offset)
 
 bool StringBuffer::is_one_of(std::string const& str, size_t offset) const
 {
-    for (auto ch : str) {
-        if (peek(offset) == ch) {
-            return true;
-        }
-    }
-    return false;
+    return str.find_first_of(static_cast<char>(peek(offset))) != std::string::npos;
 }
 
 bool StringBuffer::expect_one_of(std::string const& str, size_t offset)
@@ -139,24 +155,6 @@ int StringBuffer::one_of(std::string const& str)
         return readchar();
     }
     return 0;
-}
-
-void StringBuffer::pushback(size_t num)
-{
-    if (num > m_pos) {
-        num = m_pos;
-    }
-    m_pos -= num;
-}
-
-void StringBuffer::reset()
-{
-    if (m_pos < m_buffer.length()) {
-        m_buffer.erase(0, m_pos);
-    } else {
-        m_buffer = "";
-    }
-    rewind();
 }
 
 }
