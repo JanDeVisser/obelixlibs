@@ -24,17 +24,17 @@ std::string TokenCode_name(TokenCode t)
     }
 }
 
-Span::Span(std::string fname, Location const& loc_1, Location const& loc_2)
+Span::Span(std::string fname, Location loc_1, Location loc_2)
     : file_name(std::move(fname))
-    , start({std::min(loc_1.line, loc_2.line), std::min(loc_1.column, loc_2.column) })
-    , end({std::max(loc_1.line, loc_2.line), std::max(loc_1.column, loc_2.column) })
+    , start(std::move(loc_1))
+    , end(std::move(loc_2))
 {
 }
 
 Span::Span(std::string fname, size_t line_1, size_t col_1, size_t line_2, size_t col_2)
     : file_name(std::move(fname))
-    , start({ std::min(line_1, line_2), std::min(col_1, col_2) })
-    , end({ std::max(line_1, line_2), std::max(col_1, col_2) })
+    , start({ line_1, col_1 })
+    , end({ line_2, col_2 })
 {
 }
 

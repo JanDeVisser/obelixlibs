@@ -93,7 +93,6 @@ void Tokenizer::match_token()
         }
     }
 
-    reset();
     if (m_buffer.eof()) {
         debug(lexer, "End-of-file. Accepting TokenCode::EndOfFile");
         accept_token(TokenCode::EndOfFile, "End of File Marker");
@@ -153,10 +152,9 @@ void Tokenizer::reset() {
     debug(lexer, "Resetting tokenizer");
     auto scanned = m_buffer.scanned_string();
     for (auto ix = 0u; ix < scanned.length(); ++ix) {
-        auto ch = m_token[ix];
-        if (ch == '\r' &&ix < scanned.length()-1 && scanned[ix+1] == '\n') {
+        auto ch = scanned[ix];
+        if (ch == '\r' & ix < scanned.length()-1 && scanned[ix+1] == '\n')
             ch = scanned[++ix];
-        }
         if (ch == '\n' || ch == '\r') {
             m_mark.line++;
             m_mark.column = 1;

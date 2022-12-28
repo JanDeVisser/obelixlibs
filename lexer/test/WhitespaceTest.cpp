@@ -97,7 +97,7 @@ TEST_F(WhitespaceTest, IgnoreWS)
 {
     add_scanner<Obelix::IdentifierScanner>();
     add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, true, false });
-    tokenize(" Hello  World\nSecond Line \n Third Line ");
+    tokenize(" Hello  World\nSecond Line \r\n Third Line ");
     check_codes(9,
         Obelix::TokenCode::Identifier,
         Obelix::TokenCode::Identifier,

@@ -245,7 +245,7 @@ struct Span {
     Location end;
 
     Span() = default;
-    Span(std::string, Location const&, Location const&);
+    Span(std::string, Location, Location);
     Span(std::string, size_t, size_t, size_t, size_t);
 
     [[nodiscard]] std::string to_string() const;
