@@ -38,24 +38,19 @@ Tokenizer::Tokenizer(StringBuffer text, std::string file_name)
 {
 }
 
-std::vector<Token> const& Tokenizer::tokenize(std::optional<std::string_view const> text)
+std::vector<Token> const& Tokenizer::tokenize(std::vector<Token>& tokens)
 {
-    if (text.has_value()) {
-        m_buffer = StringBuffer(text.value());
-        m_tokens.clear();
+    debug(lexer, "Scanners:");
+    for (auto &scanner : m_scanners) {
+        debug(lexer, "{} priority {}", scanner->name(), scanner->priority());
     }
-    if (m_tokens.empty()) {
-        debug(lexer, "Scanners:");
-        for (auto &scanner : m_scanners) {
-            debug(lexer, "{} priority {}", scanner->name(), scanner->priority());
-        }
-        while (m_tokens.empty() || m_tokens.back().code() != TokenCode::EndOfFile) {
-            match_token();
-        }
-        oassert(!m_tokens.empty(), "tokenize() found no tokens, not even EOF");
-        oassert(m_tokens.back().code() == TokenCode::EndOfFile, "tokenize() did not leave an EOF");
+    m_tokens = &tokens;
+    while (tokens.empty() || tokens.back().code() != TokenCode::EndOfFile) {
+        match_token();
     }
-    return m_tokens;
+    oassert(!tokens.empty(), "tokenize() found no tokens, not even EOF");
+    oassert(tokens.back().code() == TokenCode::EndOfFile, "tokenize() did not leave an EOF");
+    return tokens;
 }
 
 void Tokenizer::match_token()
@@ -178,7 +173,7 @@ Token Tokenizer::accept(TokenCode code)
 
 Token Tokenizer::accept_token(TokenCode code, std::string value)
 {
-    Token ret = Token(code, value);
+    Token ret = Token(code, std::move(value));
     return accept_token(ret);
 }
 
@@ -191,7 +186,7 @@ Token Tokenizer::accept_token(Token& token)
     token.location(Span { m_file_name, mark, m_mark });
     debug(lexer, "Lexer::accept_token({})", token.to_string());
     if (!m_filtered_codes.contains(token.code()))
-        m_tokens.push_back(token);
+        m_tokens->push_back(token);
     return token;
 }
 

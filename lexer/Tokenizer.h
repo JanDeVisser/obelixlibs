@@ -111,7 +111,7 @@ public:
 
     [[nodiscard]] StringBuffer const& buffer() const { return m_buffer; }
 
-    std::vector<Token> const& tokenize(std::optional<std::string_view const> = {});
+    std::vector<Token> const& tokenize(std::vector<Token>& tokens);
 
     [[nodiscard]] int peek(int num = 0);
     void discard();
@@ -160,7 +160,7 @@ private:
     StringBuffer m_buffer;
     std::string m_token {};
     TokenizerState m_state { TokenizerState::Fresh };
-    std::vector<Token> m_tokens {};
+    std::vector<Token>* m_tokens { nullptr };
     int m_current { 0 };
     std::string m_file_name;
     Location m_mark { 1, 1 };

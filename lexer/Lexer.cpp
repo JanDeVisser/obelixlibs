@@ -26,8 +26,7 @@ void Lexer::assign(char const* text, std::string file_name)
 {
     m_file_name = std::move(file_name);
     m_buffer.assign(text);
-    m_tokens.clear();
-    m_current = 0;
+    invalidate();
 }
 
 void Lexer::assign(std::string const& text, std::string file_name)
@@ -47,8 +46,19 @@ std::vector<Token> const& Lexer::tokenize(char const* text, std::string file_nam
     Tokenizer tokenizer(m_buffer, m_file_name.c_str());
     tokenizer.add_scanners(m_scanners);
     tokenizer.filter_codes(m_filtered_codes);
-    m_tokens = tokenizer.tokenize();
+    tokenizer.tokenize(m_tokens);
     return m_tokens;
+}
+
+std::vector<Token> const& Lexer::tokens() const
+{
+    return m_tokens;
+}
+
+void Lexer::invalidate()
+{
+    m_tokens.clear();
+    m_current = 0;
 }
 
 Token const& Lexer::peek(size_t how_many)

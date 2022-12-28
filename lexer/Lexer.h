@@ -32,6 +32,8 @@ public:
     void assign(std::string const&, std::string = {});
     [[nodiscard]] StringBuffer const& buffer() const;
     std::vector<Token> const& tokenize(char const* = nullptr, std::string = {});
+    [[nodiscard]] std::vector<Token> const& tokens() const;
+    void invalidate();
     Token const& peek(size_t = 0);
     Token const& lex();
     Token const& replace(Token);

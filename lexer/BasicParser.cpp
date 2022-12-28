@@ -40,6 +40,16 @@ ErrorOr<void,SystemError> BasicParser::read_file(std::string const& file_name, B
 
 static Token s_eof(TokenCode::EndOfFile, "EOF triggered by lexer error");
 
+std::vector<Token> const& BasicParser::tokens() const
+{
+    return m_lexer.tokens();
+}
+
+void BasicParser::invalidate()
+{
+    return m_lexer.invalidate();
+}
+
 Token const& BasicParser::peek()
 {
     auto& ret = m_lexer.peek();

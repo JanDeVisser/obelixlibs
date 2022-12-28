@@ -23,6 +23,8 @@ public:
     [[nodiscard]] bool has_errors() const { return !m_errors.empty(); }
     Token const& peek();
     TokenCode current_code();
+    [[nodiscard]] std::vector<Token> const& tokens() const;
+    void invalidate();
 
     Token const& lex();
     Token const& replace(Token);
