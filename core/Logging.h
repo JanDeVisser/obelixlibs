@@ -95,6 +95,8 @@ public:
             fprintf(m_destination, "%s", prefix.c_str());
             auto message = format(msg.message, std::forward<Args>(args)...);
             fprintf(m_destination, "%s\n", message.c_str());
+            if (m_destination != stderr)
+                fflush(m_destination);
         }
     }
 
