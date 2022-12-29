@@ -19,6 +19,9 @@ public:
     explicit BasicParser();
     [[nodiscard]] std::string const& text() const { return m_lexer.buffer().str(); }
     ErrorOr<void,SystemError> read_file(std::string const&, BufferLocator* locator = nullptr);
+    void assign(StringBuffer const&);
+    void assign(std::string const&);
+    void assign(std::vector<std::string> const&);
     [[nodiscard]] std::vector<SyntaxError> const& errors() const { return m_errors; };
     [[nodiscard]] bool has_errors() const { return !m_errors.empty(); }
     Token const& peek();

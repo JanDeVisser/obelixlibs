@@ -12,7 +12,7 @@ extern_logging_category(lexer);
 
 ErrorOr<std::shared_ptr<BasicParser>,SystemError> BasicParser::create(std::string const& file_name, BufferLocator* locator)
 {
-    auto ret = std::shared_ptr<BasicParser>(new BasicParser);
+    auto ret = std::make_shared<BasicParser>();
     TRY_RETURN(ret->read_file(file_name, locator));
     return ret;
 }
@@ -37,6 +37,24 @@ ErrorOr<void,SystemError> BasicParser::read_file(std::string const& file_name, B
     m_lexer.assign(buffer->buffer()->str(), m_file_name);
     return {};
 }
+
+void BasicParser::assign(StringBuffer const& src)
+{
+    m_lexer.assign(src.str(), m_file_name);
+}
+
+void BasicParser::assign(std::string const& src)
+{
+    m_lexer.assign(src, m_file_name);
+}
+
+void BasicParser::assign(std::vector<std::string> const& src)
+{
+    // FIXME Use the fact that we know where the newlines are,
+    // for example by using a more flexible buffer design.
+    m_lexer.assign(join(src, '\n'), m_file_name);
+}
+
 
 static Token s_eof(TokenCode::EndOfFile, "EOF triggered by lexer error");
 
