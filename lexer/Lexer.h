@@ -34,6 +34,7 @@ public:
     std::vector<Token> const& tokenize(char const* = nullptr, std::string = {});
     [[nodiscard]] std::vector<Token> const& tokens() const;
     void invalidate();
+    void rewind();
     Token const& peek(size_t = 0);
     Token const& lex();
     Token const& replace(Token);
@@ -51,7 +52,7 @@ public:
 
     void mark();
     void discard_mark();
-    void rewind();
+    void rewind_to_mark();
 
 private:
     std::string m_file_name;

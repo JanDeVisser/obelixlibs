@@ -61,6 +61,11 @@ void Lexer::invalidate()
     m_current = 0;
 }
 
+void Lexer::rewind()
+{
+    m_current = 0;
+}
+
 Token const& Lexer::peek(size_t how_many)
 {
     if (m_tokens.empty())
@@ -112,7 +117,7 @@ void Lexer::discard_mark()
     m_bookmarks.pop_back();
 }
 
-void Lexer::rewind()
+void Lexer::rewind_to_mark()
 {
     m_current = m_bookmarks.back();
     discard_mark();

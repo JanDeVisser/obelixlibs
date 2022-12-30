@@ -28,7 +28,7 @@ public:
     TokenCode current_code();
     [[nodiscard]] std::vector<Token> const& tokens() const;
     void invalidate();
-
+    void rewind();
     Token const& lex();
     Token const& replace(Token);
     std::optional<Token const> match(TokenCode, char const* = nullptr);
@@ -44,7 +44,7 @@ public:
     [[nodiscard]] std::string const& file_path() const { return m_file_path; }
     void mark() { m_lexer.mark(); }
     void discard_mark() { m_lexer.discard_mark(); }
-    void rewind() { m_lexer.rewind(); }
+    void rewind_to_mark() { m_lexer.rewind_to_mark(); }
 
     template <typename ...Args>
     void add_error(Token const& token, std::string message, Args&&... args)

@@ -65,7 +65,12 @@ std::vector<Token> const& BasicParser::tokens() const
 
 void BasicParser::invalidate()
 {
-    return m_lexer.invalidate();
+    m_lexer.invalidate();
+}
+
+void BasicParser::rewind()
+{
+    m_lexer.rewind();
 }
 
 Token const& BasicParser::peek()
