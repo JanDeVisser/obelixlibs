@@ -12,9 +12,10 @@
 
 namespace Obelix {
 
-QStringScanner::QStringScanner(std::string quotes)
+QStringScanner::QStringScanner(std::string quotes, bool verbatim)
     : Scanner()
     , m_quotes(std::move(quotes))
+    , m_verbatim(verbatim)
 {
 }
 
@@ -30,9 +31,12 @@ void QStringScanner::match(Tokenizer& tokenizer)
 
         switch (m_state) {
         case QStrState::Init:
-            if (m_quotes.find_first_of((char) ch) != std::string::npos) {
-                tokenizer.discard();
-                m_quote = (char) ch;
+            if (m_quotes.find_first_of((char)ch) != std::string::npos) {
+                if (!m_verbatim)
+                    tokenizer.discard();
+                else
+                    tokenizer.push();
+                m_quote = (char)ch;
                 m_state = QStrState::QString;
             } else {
                 m_state = QStrState::Done;
@@ -41,11 +45,18 @@ void QStringScanner::match(Tokenizer& tokenizer)
 
         case QStrState::QString:
             if (ch == m_quote) {
-                tokenizer.discard();
+                if (!m_verbatim)
+                    tokenizer.discard();
+                else
+                    tokenizer.push();
                 tokenizer.accept(TokenCode_by_char(m_quote));
                 m_state = QStrState::Done;
             } else if (ch == '\\') {
-                tokenizer.discard();
+                if (!m_verbatim) {
+                    tokenizer.discard();
+                } else {
+                    tokenizer.push();
+                }
                 m_state = QStrState::Escape;
             } else {
                 tokenizer.push();
@@ -53,12 +64,16 @@ void QStringScanner::match(Tokenizer& tokenizer)
             break;
 
         case QStrState::Escape:
-            if (ch == 'r') {
-                tokenizer.push_as('\r');
-            } else if (ch == 'n') {
-                tokenizer.push_as('\n');
-            } else if (ch == 't') {
-                tokenizer.push_as('\t');
+            if (!m_verbatim) {
+                if (ch == 'r') {
+                    tokenizer.push_as('\r');
+                } else if (ch == 'n') {
+                    tokenizer.push_as('\n');
+                } else if (ch == 't') {
+                    tokenizer.push_as('\t');
+                } else {
+                    tokenizer.push();
+                }
             } else {
                 tokenizer.push();
             }

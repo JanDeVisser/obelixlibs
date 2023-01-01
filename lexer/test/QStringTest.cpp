@@ -10,9 +10,9 @@
 
 class QStringTest : public LexerTest {
 public:
-    void check_qstring(std::string const& in, std::string const& out)
+    void check_qstring(std::string const& in, std::string const& out, bool verbatim = false)
     {
-        add_scanner<Obelix::QStringScanner>();
+        add_scanner<Obelix::QStringScanner>("\"'`", verbatim);
         add_scanner<Obelix::IdentifierScanner>();
         add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false });
         tokenize("Hello " + in);
@@ -35,6 +35,10 @@ public:
             Obelix::TokenCode::Whitespace,
             Obelix::TokenCode::Error,
             Obelix::TokenCode::EndOfFile);
+    }
+
+    void initialize() override
+    {
     }
 
     bool debugOn() override
@@ -98,4 +102,36 @@ TEST_F(QStringTest, qstring_escape_plain_char)
 TEST_F(QStringTest, qstring_escape_as_last_char)
 {
     check_qstring_error("'escape \\");
+}
+
+TEST_F(QStringTest, qstring_verbatim)
+{
+    add_scanner<Obelix::QStringScanner>("\"'`", true);
+    add_scanner<Obelix::IdentifierScanner>();
+    add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false });
+    tokenize(R"(Hello 'single quotes' `backticks` "double quotes" World)");
+    check_codes(10,
+        Obelix::TokenCode::Identifier,
+        Obelix::TokenCode::Whitespace,
+        Obelix::TokenCode::SingleQuotedString,
+        Obelix::TokenCode::Whitespace,
+        Obelix::TokenCode::BackQuotedString,
+        Obelix::TokenCode::Whitespace,
+        Obelix::TokenCode::DoubleQuotedString,
+        Obelix::TokenCode::Whitespace,
+        Obelix::TokenCode::Identifier,
+        Obelix::TokenCode::EndOfFile);
+
+    EXPECT_EQ(count_tokens_with_code(Obelix::TokenCode::Identifier), 2);
+    EXPECT_EQ(count_tokens_with_code(Obelix::TokenCode::SingleQuotedString), 1);
+    EXPECT_EQ(count_tokens_with_code(Obelix::TokenCode::DoubleQuotedString), 1);
+    EXPECT_EQ(count_tokens_with_code(Obelix::TokenCode::BackQuotedString), 1);
+    EXPECT_EQ(tokens[2].value(), "'single quotes'");
+    EXPECT_EQ(tokens[4].value(), "`backticks`");
+    EXPECT_EQ(tokens[6].value(), R"("double quotes")");
+}
+
+TEST_F(QStringTest, qstring_escape_newline_verbatim)
+{
+    check_qstring("'escaped\\nnewline'", "'escaped\\nnewline'", true);
 }

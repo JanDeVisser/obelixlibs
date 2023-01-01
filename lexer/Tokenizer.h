@@ -183,7 +183,7 @@ enum class QStrState {
 
 class QStringScanner : public Scanner {
 public:
-    explicit QStringScanner(std::string = "'`\"");
+    explicit QStringScanner(std::string = "'`\"", bool = false);
     [[nodiscard]] std::string quotes() const { return m_quotes; }
     void match(Tokenizer& tokenizer) override;
     [[nodiscard]] char const* name() const override { return "qstring"; }
@@ -192,6 +192,7 @@ private:
     std::string m_quotes;
     char m_quote {};
     QStrState m_state { QStrState::Init };
+    bool m_verbatim { false };
 };
 
 #define ENUMERATE_WS_STATES(S) \
