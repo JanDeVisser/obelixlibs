@@ -138,7 +138,47 @@ namespace Obelix {
     S(Keyword56, nullptr, nullptr)       \
     S(Keyword57, nullptr, nullptr)       \
     S(Keyword58, nullptr, nullptr)       \
-    S(Keyword59, nullptr, nullptr)
+    S(Keyword59, nullptr, nullptr)       \
+    S(Keyword60, nullptr, nullptr)       \
+    S(Keyword61, nullptr, nullptr)       \
+    S(Keyword62, nullptr, nullptr)       \
+    S(Keyword63, nullptr, nullptr)       \
+    S(Keyword64, nullptr, nullptr)       \
+    S(Keyword65, nullptr, nullptr)       \
+    S(Keyword66, nullptr, nullptr)       \
+    S(Keyword67, nullptr, nullptr)       \
+    S(Keyword68, nullptr, nullptr)       \
+    S(Keyword69, nullptr, nullptr)       \
+    S(Keyword70, nullptr, nullptr)       \
+    S(Keyword71, nullptr, nullptr)       \
+    S(Keyword72, nullptr, nullptr)       \
+    S(Keyword73, nullptr, nullptr)       \
+    S(Keyword74, nullptr, nullptr)       \
+    S(Keyword75, nullptr, nullptr)       \
+    S(Keyword76, nullptr, nullptr)       \
+    S(Keyword77, nullptr, nullptr)       \
+    S(Keyword78, nullptr, nullptr)       \
+    S(Keyword79, nullptr, nullptr)       \
+    S(Keyword80, nullptr, nullptr)       \
+    S(Keyword81, nullptr, nullptr)       \
+    S(Keyword82, nullptr, nullptr)       \
+    S(Keyword83, nullptr, nullptr)       \
+    S(Keyword84, nullptr, nullptr)       \
+    S(Keyword85, nullptr, nullptr)       \
+    S(Keyword86, nullptr, nullptr)       \
+    S(Keyword87, nullptr, nullptr)       \
+    S(Keyword88, nullptr, nullptr)       \
+    S(Keyword89, nullptr, nullptr)       \
+    S(Keyword90, nullptr, nullptr)       \
+    S(Keyword91, nullptr, nullptr)       \
+    S(Keyword92, nullptr, nullptr)       \
+    S(Keyword93, nullptr, nullptr)       \
+    S(Keyword94, nullptr, nullptr)       \
+    S(Keyword95, nullptr, nullptr)       \
+    S(Keyword96, nullptr, nullptr)       \
+    S(Keyword97, nullptr, nullptr)       \
+    S(Keyword98, nullptr, nullptr)       \
+    S(Keyword99, nullptr, nullptr)
 
 enum class TokenCode {
 #undef ENUM_TOKEN_CODE
