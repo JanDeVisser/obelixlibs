@@ -10,7 +10,7 @@ namespace Obelix {
 
 void CommentScanner::find_eol(Tokenizer& tokenizer)
 {
-    for (auto ch = tokenizer.peek(); m_state == CommentState::Text;) {
+    for (auto ch = tokenizer.peek(); m_state == CommentState::Text; ch = tokenizer.peek()) {
         if (!ch || (ch == '\r') || (ch == '\n')) {
             m_state = CommentState::None;
             tokenizer.accept(TokenCode::Comment);
