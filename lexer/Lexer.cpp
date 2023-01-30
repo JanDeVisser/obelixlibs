@@ -22,6 +22,14 @@ Lexer::Lexer(StringBuffer text, std::string file_name)
 {
 }
 
+std::shared_ptr<Scanner> Lexer::add_scanner(std::string name, CustomScanner::Match match, int priority)
+{
+    auto scanner = std::make_shared<CustomScanner>(std::move(name), std::move(match), priority);
+    m_scanners.insert(std::dynamic_pointer_cast<Scanner>(scanner));
+    return scanner;
+}
+
+
 void Lexer::assign(char const* text, std::string file_name)
 {
     m_file_name = std::move(file_name);

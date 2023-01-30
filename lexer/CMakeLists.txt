@@ -2,6 +2,7 @@ add_library(
         obllexer
         STATIC
         BasicParser.cpp
+        CustomScanner.cpp
         IdentifierScanner.cpp
         KeywordScanner.cpp
         Lexer.cpp

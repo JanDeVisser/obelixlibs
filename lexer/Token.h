@@ -75,6 +75,7 @@ namespace Obelix {
     S(BinaryNumber, nullptr, nullptr)    \
     S(Float, nullptr, nullptr)           \
     S(Identifier, nullptr, nullptr)      \
+    S(Text, nullptr, nullptr)            \
     S(DoubleQuotedString, "\"", nullptr) \
     S(SingleQuotedString, "'", nullptr)  \
     S(BackQuotedString, "`", nullptr)    \

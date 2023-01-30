@@ -3,6 +3,7 @@ enable_testing()
 add_executable(
         LexerTest
         CommentTest.cpp
+        CustomScannerTest.cpp
         KeywordTest.cpp
         LexerTest.cpp
         NumberTest.cpp

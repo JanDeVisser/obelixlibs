@@ -168,6 +168,18 @@ private:
     std::shared_ptr<Scanner> m_locked_scanner { nullptr };
 };
 
+class CustomScanner : public Scanner {
+public:
+    using Match = std::function<void(Tokenizer&)>;
+    CustomScanner(std::string, Match, int = 10);
+    void match(Tokenizer& tokenizer) override;
+    [[nodiscard]] char const* name() const override { return m_name.c_str(); }
+
+private:
+    std::string m_name;
+    Match m_match;
+};
+
 #define ENUMERATE_QSTR_STATES(S) \
     S(Init)                      \
     S(QString)                   \

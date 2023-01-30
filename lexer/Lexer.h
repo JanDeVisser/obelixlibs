@@ -50,6 +50,8 @@ public:
         return ret;
     }
 
+    std::shared_ptr<Scanner> add_scanner(std::string, CustomScanner::Match, int = 10);
+
     void mark();
     void discard_mark();
     void rewind_to_mark();
