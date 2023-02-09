@@ -5,8 +5,11 @@
  */
 
 #include <gtest/gtest.h>
+#include <lexer/Lexer.h>
 #include <lexer/Tokenizer.h>
 #include <lexer/test/LexerTest.h>
+
+using namespace Obelix;
 
 class QStringTest : public LexerTest {
 public:
@@ -21,7 +24,7 @@ public:
             Obelix::TokenCode::Whitespace,
             Obelix::TokenCode::SingleQuotedString,
             Obelix::TokenCode::EndOfFile);
-        EXPECT_EQ(tokens[2].value(), out);
+        EXPECT_EQ(lexer.tokens()[2].value(), out);
     }
 
     void check_qstring_error(std::string const& in)
@@ -47,12 +50,24 @@ public:
     }
 };
 
+TEST(BasicQStringTest, SingleQuotedString)
+{
+    Lexer lexer {};
+    lexer.add_scanner<QStringScanner>();
+    lexer.add_scanner<IdentifierScanner>();
+    lexer.add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false });
+    auto tokens = lexer.tokenize(R"('X')");
+    EXPECT_EQ(tokens.size(), 2);
+    EXPECT_EQ(tokens[0].code(), TokenCode::SingleQuotedString);
+    EXPECT_EQ(tokens[0].string_value(), "X");
+}
+
 TEST_F(QStringTest, qstring)
 {
     add_scanner<Obelix::QStringScanner>();
     add_scanner<Obelix::IdentifierScanner>();
     add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false });
-    tokenize("Hello 'single quotes' `backticks` \"double quotes\" World");
+    tokenize(R"(Hello 'single quotes' `backticks` "double quotes" World)");
     check_codes(10,
         Obelix::TokenCode::Identifier,
         Obelix::TokenCode::Whitespace,
@@ -69,9 +84,9 @@ TEST_F(QStringTest, qstring)
     EXPECT_EQ(count_tokens_with_code(Obelix::TokenCode::SingleQuotedString), 1);
     EXPECT_EQ(count_tokens_with_code(Obelix::TokenCode::DoubleQuotedString), 1);
     EXPECT_EQ(count_tokens_with_code(Obelix::TokenCode::BackQuotedString), 1);
-    EXPECT_EQ(tokens[2].value(), "single quotes");
-    EXPECT_EQ(tokens[4].value(), "backticks");
-    EXPECT_EQ(tokens[6].value(), "double quotes");
+    EXPECT_EQ(lexer.tokens()[2].value(), "single quotes");
+    EXPECT_EQ(lexer.tokens()[4].value(), "backticks");
+    EXPECT_EQ(lexer.tokens()[6].value(), "double quotes");
 }
 
 TEST_F(QStringTest, qstring_unclosed_string)
@@ -126,12 +141,12 @@ TEST_F(QStringTest, qstring_verbatim)
     EXPECT_EQ(count_tokens_with_code(Obelix::TokenCode::SingleQuotedString), 1);
     EXPECT_EQ(count_tokens_with_code(Obelix::TokenCode::DoubleQuotedString), 1);
     EXPECT_EQ(count_tokens_with_code(Obelix::TokenCode::BackQuotedString), 1);
-    EXPECT_EQ(tokens[2].value(), "'single quotes'");
-    EXPECT_EQ(tokens[4].value(), "`backticks`");
-    EXPECT_EQ(tokens[6].value(), R"("double quotes")");
+    EXPECT_EQ(lexer.tokens()[2].value(), "'single quotes'");
+    EXPECT_EQ(lexer.tokens()[4].value(), "`backticks`");
+    EXPECT_EQ(lexer.tokens()[6].value(), R"("double quotes")");
 }
 
 TEST_F(QStringTest, qstring_escape_newline_verbatim)
 {
-    check_qstring("'escaped\\nnewline'", "'escaped\\nnewline'", true);
+    check_qstring(R"('escaped\nnewline')", R"('escaped\nnewline')", true);
 }

@@ -37,11 +37,11 @@ TEST_F(SimpleLexerTest, SimplestTest)
     check_codes(2,
         Obelix::TokenCode::Identifier,
         Obelix::TokenCode::EndOfFile);
-    EXPECT_EQ(tokens[0].value(), "A");
-    EXPECT_EQ(tokens[0].location().start.line, 1);
-    EXPECT_EQ(tokens[0].location().start.column, 1);
-    EXPECT_EQ(tokens[0].location().end.line, 1);
-    EXPECT_EQ(tokens[0].location().end.column, 2);
+    EXPECT_EQ(lexer.tokens()[0].value(), "A");
+    EXPECT_EQ(lexer.tokens()[0].location().start.line, 1);
+    EXPECT_EQ(lexer.tokens()[0].location().start.column, 1);
+    EXPECT_EQ(lexer.tokens()[0].location().end.line, 1);
+    EXPECT_EQ(lexer.tokens()[0].location().end.column, 2);
 }
 
 TEST_F(SimpleLexerTest, SimpleTest1)
@@ -51,10 +51,11 @@ TEST_F(SimpleLexerTest, SimpleTest1)
         Obelix::TokenCode::Identifier,
         Obelix::TokenCode::Whitespace,
         Obelix::TokenCode::EndOfFile);
-    EXPECT_EQ(tokens[0].value(), "A");
-    EXPECT_EQ(tokens[1].value(), " ");
-    EXPECT_EQ(tokens[0].location(), Obelix::Span("", 1, 1, 1, 2 ));
-    EXPECT_EQ(tokens[1].location(), Obelix::Span("", 1, 2, 1, 3 ));
+    static std::string empty;
+    EXPECT_EQ(lexer.tokens()[0].value(), "A");
+    EXPECT_EQ(lexer.tokens()[1].value(), " ");
+    EXPECT_EQ(lexer.tokens()[0].location(), Obelix::Span(empty, 1, 1, 1, 2 ));
+    EXPECT_EQ(lexer.tokens()[1].location(), Obelix::Span(empty, 1, 2, 1, 3 ));
 }
 
 TEST_F(SimpleLexerTest, SimpleTest2)
@@ -65,9 +66,9 @@ TEST_F(SimpleLexerTest, SimpleTest2)
             Obelix::TokenCode::Whitespace,
             Obelix::TokenCode::Identifier,
             Obelix::TokenCode::EndOfFile);
-    EXPECT_EQ(tokens[0].value(), "A");
-    EXPECT_EQ(tokens[1].value(), " ");
-    EXPECT_EQ(tokens[2].value(), "B");
+    EXPECT_EQ(lexer.tokens()[0].value(), "A");
+    EXPECT_EQ(lexer.tokens()[1].value(), " ");
+    EXPECT_EQ(lexer.tokens()[2].value(), "B");
 }
 
 TEST_F(LexerTest, lexer_lex)
@@ -84,5 +85,5 @@ TEST_F(LexerTest, lexer_lex)
         Obelix::TokenCode::Whitespace,
         Obelix::TokenCode::Identifier,
         Obelix::TokenCode::EndOfFile);
-    EXPECT_EQ(tokens[8].value(), "a");
+    EXPECT_EQ(lexer.tokens()[8].value(), "a");
 }

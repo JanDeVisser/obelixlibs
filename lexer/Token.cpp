@@ -24,15 +24,15 @@ std::string TokenCode_name(TokenCode t)
     }
 }
 
-Span::Span(std::string fname, Location loc_1, Location loc_2)
-    : file_name(std::move(fname))
-    , start(std::move(loc_1))
-    , end(std::move(loc_2))
+Span::Span(std::string& fname, Location loc_1, Location loc_2)
+    : file_name(fname)
+    , start(loc_1)
+    , end(loc_2)
 {
 }
 
-Span::Span(std::string fname, size_t line_1, size_t col_1, size_t line_2, size_t col_2)
-    : file_name(std::move(fname))
+Span::Span(std::string& fname, size_t line_1, size_t col_1, size_t line_2, size_t col_2)
+    : file_name(fname)
     , start({ line_1, col_1 })
     , end({ line_2, col_2 })
 {
@@ -80,7 +80,7 @@ std::string Token::to_string() const
 {
     std::string ret = code_name();
     if (!m_value.empty()) {
-        ret += " [" + value() + "]";
+        ret += format(" [{}]", value());
     }
     return ret;
 }

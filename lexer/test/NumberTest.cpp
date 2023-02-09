@@ -25,7 +25,7 @@ public:
             Obelix::TokenCode::Whitespace,
             code,
             Obelix::TokenCode::EndOfFile);
-        Obelix::ErrorOr<T, Obelix::SyntaxError> value_or_error = Obelix::token_value<T>(tokens[4]);
+        Obelix::ErrorOr<T, Obelix::SyntaxError> value_or_error = Obelix::token_value<T>(lexer.tokens()[4]);
         EXPECT_FALSE(value_or_error.is_error());
         EXPECT_EQ(value_or_error.value(), out);
     }
@@ -48,6 +48,11 @@ TEST_F(NumberTest, number_integer)
     check_number<int>("1", 1, Obelix::TokenCode::Integer);
 }
 
+TEST_F(NumberTest, longer_number_integer)
+{
+    check_number<int>("69420", 69420, Obelix::TokenCode::Integer);
+}
+
 TEST_F(NumberTest, number_float)
 {
     check_number<double>("3.14", 3.14, Obelix::TokenCode::Float);
@@ -67,7 +72,7 @@ TEST_F(NumberTest, double_period)
 {
     add_scanner<Obelix::NumberScanner>(Obelix::NumberScanner::Config { true, false, true, true, true });
     add_scanner<Obelix::IdentifierScanner>();
-    add_scanner<Obelix::KeywordScanner>(Obelix::Token(Obelix::TokenCode::Keyword18, ".."));
+    add_scanner<Obelix::KeywordScanner>(Obelix::TokenCode::Keyword18, "..");
     add_scanner<Obelix::WhitespaceScanner>(Obelix::WhitespaceScanner::Config { false, false });
     tokenize("0..10");
 
@@ -76,10 +81,10 @@ TEST_F(NumberTest, double_period)
         Obelix::TokenCode::Keyword18,
         Obelix::TokenCode::Integer,
         Obelix::TokenCode::EndOfFile);
-    auto token0_value_or_error = Obelix::token_value<int>(tokens[0]);
+    auto token0_value_or_error = Obelix::token_value<int>(lexer.tokens()[0]);
     EXPECT_FALSE(token0_value_or_error.is_error());
     EXPECT_EQ(token0_value_or_error.value(), 0);
-    auto token2_value_or_error = Obelix::token_value<int>(tokens[2]);
+    auto token2_value_or_error = Obelix::token_value<int>(lexer.tokens()[2]);
     EXPECT_FALSE(token2_value_or_error.is_error());
     EXPECT_EQ(token2_value_or_error.value(), 10);
 }

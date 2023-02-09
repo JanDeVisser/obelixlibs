@@ -46,7 +46,7 @@ bool IdentifierScanner::filter_character(Tokenizer& tokenizer, int ch) const {
     };
     ret = filter_against(m_config.filter, m_config.alpha, m_config.digits);
 
-    if (ret && tokenizer.token().empty()) {
+    if (ret && tokenizer.current_token().empty()) {
         ret = filter_against(m_config.starts_with, m_config.startswith_alpha, m_config.startswith_digits);
     }
     return ret;

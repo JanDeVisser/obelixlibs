@@ -89,9 +89,8 @@ private:
 
 class Tokenizer {
 public:
-    Tokenizer() = default;
     explicit Tokenizer(std::string_view const&, std::string = {});
-    explicit Tokenizer(StringBuffer, std::string = {});
+    explicit Tokenizer(StringBuffer&, std::string = {});
 
     template<typename... Args>
     void filter_codes(TokenCode code, Args&&... args)
@@ -115,10 +114,26 @@ public:
 
     [[nodiscard]] int peek(int num = 0);
     void discard();
-    [[nodiscard]] std::string const& current_token() const;
-    Token accept(TokenCode);
-    Token accept_token(TokenCode, std::string);
-    Token accept_token(Token&);
+    [[nodiscard]] std::string_view current_token() const;
+    void accept(TokenCode);
+
+    template <typename Str>
+    void accept(TokenCode code, Str value)
+    {
+        auto mark = m_mark;
+        skip();
+        if (m_filtered_codes.contains(code))
+            return;
+        m_tokens->emplace_back(Span { m_file_name, mark, m_mark }, code, value);
+        debug(lexer, "Lexer::accept({})", m_tokens->back());
+    }
+
+    template <>
+    void accept(TokenCode code, const char* value)
+    {
+        accept(code, std::string_view(value));
+    }
+
     void push();
     void push_as(int);
     void skip();
@@ -157,8 +172,9 @@ private:
     };
 
     std::set<std::shared_ptr<Scanner>, ScannerCmp> m_scanners {};
-    StringBuffer m_buffer;
-    std::string m_token {};
+    std::optional<StringBuffer> m_string_buffer {};
+    StringBuffer& m_buffer;
+    std::optional<std::string> m_token_string {};
     TokenizerState m_state { TokenizerState::Fresh };
     std::vector<Token>* m_tokens { nullptr };
     int m_current { 0 };
@@ -428,7 +444,8 @@ private:
 class KeywordScanner : public Scanner {
 public:
     struct Keyword {
-        Token token;
+        TokenCode token_code;
+        std::string token;
         bool is_operator { true };
     };
 
@@ -471,17 +488,55 @@ public:
     void match(Tokenizer&) override;
     [[nodiscard]] char const* name() const override { return "keyword"; }
 
-    template<typename T, typename... Args>
-    void add_keywords(T t, Args&&... args)
+    template<typename... Args>
+    void add_keywords(TokenCode code, std::string text, Args&&... args)
     {
-        add_keyword(t);
+        add_keyword(code, std::move(text));
+        add_keywords(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    void add_keywords(TokenCode code, char const* text, Args&&... args)
+    {
+        add_keyword(code, text);
+        add_keywords(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    void add_keywords(int code, std::string text, Args&&... args)
+    {
+        add_keyword(code, std::move(text));
+        add_keywords(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    void add_keywords(int code, char const* text, Args&&... args)
+    {
+        add_keyword(code, text);
+        add_keywords(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    void add_keywords(TokenCode code, Args&&... args)
+    {
+        add_keyword(code);
+        add_keywords(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    void add_keywords(int code, Args&&... args)
+    {
+        add_keyword(code);
         add_keywords(std::forward<Args>(args)...);
     }
 
     void add_keywords() { }
 
-    void add_keyword(Token const&);
-    void add_keyword(TokenCode);
+    void add_keyword(TokenCode, std::string = {});
+    void add_keyword(int code, std::string text = {})
+    {
+        add_keyword(static_cast<TokenCode>(code), text);
+    }
 
 private:
     void reset();
@@ -498,18 +553,5 @@ private:
 
     bool m_case_sensitive { true };
 };
-
-#if 0
-class CommentScanner : public ScannerConfig {
-public:
-    CommentScanner(LexerConfig const&, std::string const&);
-};
-
-class PositionScanner : public ScannerConfig {
-public:
-    PositionScanner(LexerConfig const&, std::string const&);
-};
-
-#endif
 
 }

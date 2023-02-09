@@ -37,4 +37,27 @@ std::string ErrorCode_message(ErrorCode code)
     }
 }
 
+SystemError::SystemError(ErrorCode code, std::string msg)
+    : m_code(code)
+    , m_errno(errno)
+    , m_message(std::move(msg))
+{
+    if (m_message.empty()) {
+        if (m_errno != 0)
+            m_message = strerror(m_errno);
+        else
+            m_message = "No Error";
+    }
+}
+
+std::string SystemError::to_string() const
+{
+    if (m_errno != 0)
+        return format("[{}] {}: {}", m_code, m_message, strerror(m_errno));
+    return format("[{}] {}", m_code, m_message);
+}
+
+
+
+
 }

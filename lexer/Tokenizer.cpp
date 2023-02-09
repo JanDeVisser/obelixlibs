@@ -26,14 +26,15 @@ public:
 private:
 };
 
-Tokenizer::Tokenizer(std::string_view const& text, std::string file_name)
+Tokenizer::Tokenizer(StringBuffer& text, std::string file_name)
     : m_buffer(text)
     , m_file_name(std::move(file_name))
 {
 }
 
-Tokenizer::Tokenizer(StringBuffer text, std::string file_name)
-    : m_buffer(std::move(text))
+Tokenizer::Tokenizer(std::string_view const& text, std::string file_name)
+    : m_string_buffer(text)
+    , m_buffer(m_string_buffer.value())
     , m_file_name(std::move(file_name))
 {
 }
@@ -90,19 +91,16 @@ void Tokenizer::match_token()
 
     if (m_buffer.eof()) {
         debug(lexer, "End-of-file. Accepting TokenCode::EndOfFile");
-        accept_token(TokenCode::EndOfFile, "End of File Marker");
+        accept(TokenCode::EndOfFile, "End of File Marker");
     }
 }
 
-std::string const& Tokenizer::token() const
-{
-    return m_token;
-}
-
+/*
 void Tokenizer::chop(size_t num)
-{
+{;
     m_token.erase(0, num);
 }
+ */
 
 TokenizerState Tokenizer::state() const
 {
@@ -125,18 +123,20 @@ bool Tokenizer::at_end() const
 void Tokenizer::rewind()
 {
     debug(lexer, "Rewinding tokenizer");
-    m_token = "";
+    m_token_string.reset();
     m_buffer.rewind();
 }
 
 void Tokenizer::partial_rewind(size_t num)
 {
-    if (num > m_token.length())
-        num = m_token.length();
-    if (num < m_token.length())
-        m_token = m_token.substr(0, m_token.length() - num);
-    else
-        m_token = "";
+    if (num > m_buffer.scanned())
+        num = m_buffer.scanned();
+    if (m_token_string.has_value()) {
+        if (num < m_buffer.scanned())
+            m_token_string = m_token_string->substr(0, m_buffer.scanned() - num);
+        else
+            m_token_string->clear();
+    }
     m_buffer.partial_rewind(num);
 }
 
@@ -158,36 +158,24 @@ void Tokenizer::reset() {
         }
     }
     m_buffer.reset();
-    m_token = "";
+    m_token_string.reset();
 }
 
-std::string const& Tokenizer::current_token() const
+std::string_view Tokenizer::current_token() const
 {
-    return m_token;
+    if (m_token_string.has_value())
+        return std::string_view(m_token_string.value());
+    else
+        return m_buffer.scanned_string();
 }
 
-Token Tokenizer::accept(TokenCode code)
+void Tokenizer::accept(TokenCode code)
 {
-    return accept_token(code, m_token);
-}
-
-Token Tokenizer::accept_token(TokenCode code, std::string value)
-{
-    Token ret = Token(code, std::move(value));
-    return accept_token(ret);
-}
-
-Token Tokenizer::accept_token(Token& token)
-{
-    auto mark = m_mark;
-    skip();
-    // reset(), and therefore skip(), sets the mark to the
-    // current point:
-    token.location(Span { m_file_name, mark, m_mark });
-    debug(lexer, "Lexer::accept_token({})", token.to_string());
-    if (!m_filtered_codes.contains(token.code()))
-        m_tokens->push_back(token);
-    return token;
+    if (m_token_string.has_value()) {
+        accept(code, m_token_string.value());
+        return;
+    }
+    accept(code, m_buffer.scanned_string());
 }
 
 void Tokenizer::skip()
@@ -196,15 +184,38 @@ void Tokenizer::skip()
     m_state = TokenizerState::Success;
 }
 
+void Tokenizer::chop(size_t num)
+{
+    if (num < 1)
+        return;
+    if (!m_token_string.has_value())
+        m_token_string = current_token();
+    if (num > m_token_string->length())
+        num = m_token_string->length();
+    m_token_string = m_token_string->substr(0, m_token_string->length()-num);
+}
+
 void Tokenizer::push() {
-    push_as(m_current);
+    if (m_token_string.has_value()) {
+        m_token_string.value() += (char) m_buffer.peek();
+    }
+    m_buffer.skip();
+    m_current = 0;
 }
 
 void Tokenizer::push_as(int ch) {
-    m_buffer.readchar();
-    if (ch)
-        m_token += (char) ch;
-    m_current = 0;
+    if (ch != m_buffer.peek()) {
+        if (!m_token_string.has_value()) {
+            m_token_string = (m_buffer.scanned()) ? current_token() : "";
+        }
+        if (ch) {
+            m_token_string.value() += (char)ch;
+        }
+        m_buffer.skip();
+        m_current = 0;
+    } else {
+        push();
+    }
 }
 
 void Tokenizer::discard() {

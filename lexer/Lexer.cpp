@@ -12,13 +12,13 @@ logging_category(lexer);
 
 Lexer::Lexer(char const* text, std::string file_name)
     : m_file_name(std::move(file_name))
-    , m_buffer((text) ? text : "")
+    , m_buffer(new StringBuffer(text))
 {
 }
 
-Lexer::Lexer(StringBuffer text, std::string file_name)
+Lexer::Lexer(StringBuffer& text, std::string file_name)
     : m_file_name(std::move(file_name))
-    , m_buffer(std::move(text))
+    , m_buffer(new StringBuffer(text))
 {
 }
 
@@ -30,28 +30,30 @@ std::shared_ptr<Scanner> Lexer::add_scanner(std::string name, CustomScanner::Mat
 }
 
 
-void Lexer::assign(char const* text, std::string file_name)
+void Lexer::assign(char const* text, std::string file_name, bool take_ownership)
 {
     m_file_name = std::move(file_name);
-    m_buffer.assign(text);
+    m_buffer->assign(text, take_ownership);
     invalidate();
 }
 
-void Lexer::assign(std::string const& text, std::string file_name)
+void Lexer::assign(std::string text, std::string file_name)
 {
-    assign(text.c_str(), std::move(file_name));
+    m_file_name = std::move(file_name);
+    m_buffer->assign(std::move(text));
+    invalidate();
 }
 
 StringBuffer const& Lexer::buffer() const
 {
-    return m_buffer;
+    return *m_buffer;
 }
 
-std::vector<Token> const& Lexer::tokenize(char const* text, std::string file_name)
+std::vector<Token> const& Lexer::tokenize(char const* text, std::string file_name, bool take_ownership)
 {
-    if (text)
-        assign(text, std::move(file_name));
-    Tokenizer tokenizer(m_buffer, m_file_name.c_str());
+    if (text != nullptr)
+        assign(text, std::move(file_name), take_ownership);
+    Tokenizer tokenizer(*m_buffer, m_file_name);
     tokenizer.add_scanners(m_scanners);
     tokenizer.filter_codes(m_filtered_codes);
     tokenizer.tokenize(m_tokens);
@@ -90,10 +92,10 @@ Token const& Lexer::lex()
     return ret;
 }
 
-Token const& Lexer::replace(Token token)
+Token const& Lexer::replace(Token const& token)
 {
     auto const& ret = peek(0);
-    m_tokens[m_current] = std::move(token);
+    m_tokens[m_current] = token;
     return ret;
 }
 

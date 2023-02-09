@@ -16,311 +16,6 @@
 
 namespace Obelix {
 
-template<typename T>
-struct Converter {
-    static std::string to_string(T const& t)
-    {
-        return t.to_string();
-    }
-
-    static double to_double(T const& t)
-    {
-        return std::stod(t.to_string());
-    }
-
-    static long to_long(T const& t)
-    {
-        return std::stol(t.to_string());
-    }
-};
-
-template<>
-struct Converter<std::string> {
-    static std::string to_string(std::string const& val)
-    {
-        return val;
-    }
-
-    static double to_double(std::string const& val)
-    {
-        return std::stod(val);
-    }
-
-    static long to_long(std::string const& val)
-    {
-        return std::stol(val);
-    }
-};
-
-template<>
-struct Converter<std::string*> {
-    static std::string to_string(std::string* val)
-    {
-        return *val;
-    }
-
-    static double to_double(std::string* val)
-    {
-        return std::stod(*val);
-    }
-
-    static long to_long(std::string* val)
-    {
-        return std::stol(*val);
-    }
-};
-
-template<>
-struct Converter<std::string const&> {
-    static std::string to_string(std::string const& val)
-    {
-        return val;
-    }
-
-    static double to_double(std::string const& val)
-    {
-        return std::stod(val);
-    }
-
-    static long to_long(std::string const& val)
-    {
-        return std::stol(val);
-    }
-};
-
-template<>
-struct Converter<char const*> : public Converter<std::string const&> {
-};
-
-template<>
-struct Converter<char*> : public Converter<std::string const&> {
-};
-
-template<>
-struct Converter<char const[]> : public Converter<std::string const&> {
-};
-
-template<>
-struct Converter<char[]> : public Converter<std::string const&> {
-};
-
-template<int N>
-struct Converter<char[N]> : public Converter<std::string const&> {
-};
-
-template<>
-struct Converter<std::string_view> {
-    static std::string to_string(std::string_view val)
-    {
-        return std::string(val);
-    }
-
-    static double to_double(std::string_view val)
-    {
-        return std::stod(std::string(val));
-    }
-
-    static long to_long(std::string_view val)
-    {
-        return std::stol(std::string(val));
-    }
-};
-
-template<>
-struct Converter<double> {
-    static std::string to_string(double val)
-    {
-        return std::to_string(val);
-    }
-
-    static double to_double(double val)
-    {
-        return val;
-    }
-
-    static long to_long(double val)
-    {
-        return static_cast<long>(val);
-    }
-};
-
-template<>
-struct Converter<long> {
-    static std::string to_string(long val)
-    {
-        return std::to_string(val);
-    }
-
-    static double to_double(long val)
-    {
-        return static_cast<double>(val);
-    }
-
-    static long to_long(long val)
-    {
-        return val;
-    }
-};
-
-template<>
-struct Converter<unsigned long> {
-    static std::string to_string(unsigned long val)
-    {
-        return std::to_string(val);
-    }
-
-    static double to_double(unsigned long val)
-    {
-        return static_cast<double>(val);
-    }
-
-    static unsigned long to_long(unsigned long val)
-    {
-        return val;
-    }
-};
-
-template<>
-struct Converter<int> : public Converter<long> {
-};
-
-template<>
-struct Converter<unsigned int> : public Converter<unsigned long> {
-};
-
-template<>
-struct Converter<short> : public Converter<long> {
-};
-
-template<>
-struct Converter<unsigned short> : public Converter<unsigned long> {
-};
-
-template<>
-struct Converter<char> : public Converter<long> {
-};
-
-template<>
-struct Converter<unsigned char> : public Converter<unsigned long> {
-};
-
-template<>
-struct Converter<bool> {
-    static std::string to_string(bool val)
-    {
-        return (val) ? "true" : "false";
-    }
-
-    static double to_double(bool val)
-    {
-        return (double)to_long(val);
-    }
-
-    static unsigned long to_long(bool val)
-    {
-        return (val) ? 1 : 0;
-    }
-};
-
-template<>
-struct Converter<void*> {
-    static std::string to_string(void *val)
-    {
-        return std::to_string(reinterpret_cast<uintptr_t>(val));
-    }
-
-    static double to_double(void *val)
-    {
-        return static_cast<double>(reinterpret_cast<uintptr_t>(val));
-    }
-
-    static long to_long(void* val)
-    {
-        return static_cast<long>(reinterpret_cast<uintptr_t>(val));;
-    }
-};
-
-template<typename T>
-struct Converter<std::shared_ptr<T>> {
-    static std::string to_string(std::shared_ptr<T> const& val)
-    {
-        if (val == nullptr)
-            return "(null)";
-        return val->to_string();
-        //        return Converter<T*>::to_string(val.get());
-    }
-
-    static double to_double(std::shared_ptr<T> const& val)
-    {
-        if (!val)
-            return NAN;
-        return to_double_unconditional(val->to_string());
-        //        return Converter<T*>::to_double(val.get());
-    }
-
-    static unsigned long to_long(std::shared_ptr<T> const& val)
-    {
-        if (!val)
-            return 0;
-        return to_long_unconditional(val->to_string());
-        //        return Converter<T*>::to_long(val.get());
-    }
-};
-
-template<typename T>
-struct Converter<std::vector<T>> {
-    static std::string to_string(std::vector<T> const& val)
-    {
-        return Obelix::join(val, ", ", [](T elem) { return elem.to_string(); });
-    }
-
-    static double to_double(std::vector<T> const& val)
-    {
-        return NAN;
-    }
-
-    static unsigned long to_long(std::vector<T> const& val)
-    {
-        return val.size();
-    }
-};
-
-template<typename T>
-struct Converter<std::vector<T*>> {
-    static std::string to_string(std::vector<T*> const& val)
-    {
-        return Obelix::join(val, ", ", [](T elem) { return elem->to_string(); });
-    }
-
-    static double to_double(std::vector<T*> const& val)
-    {
-        return NAN;
-    }
-
-    static unsigned long to_long(std::vector<T*> const& val)
-    {
-        return val.size();
-    }
-};
-
-template<typename T>
-struct Converter<std::vector<std::shared_ptr<T>>> {
-    static std::string to_string(std::vector<std::shared_ptr<T>> const& val)
-    {
-        return Obelix::join(val, ", ", [](std::shared_ptr<T> elem) { return elem->to_string(); });
-    }
-
-    static double to_double(std::vector<std::shared_ptr<T>> const& val)
-    {
-        return NAN;
-    }
-
-    static unsigned long to_long(std::vector<std::shared_ptr<T>> const& val)
-    {
-        return val.size();
-    }
-};
-
 class FormatSpecifier {
 public:
     enum class FormatState {
@@ -405,22 +100,21 @@ public:
     template<typename T>
     [[nodiscard]] std::string format(T const& arg) const
     {
-        Converter<T> converter;
         switch (m_type) {
         case FormatSpecifierType::Default:
         case FormatSpecifierType::String:
-            return format_string(converter.to_string(arg));
+            return format_string(to_string<T>(arg));
         case FormatSpecifierType::Int:
         case FormatSpecifierType::Character:
-            return format_long(converter.to_long(arg));
+            return format_long(to_long<T>(arg));
         default:
-            return format(converter.to_double(arg));
+            return format(to_double<T>(arg));
         }
     }
 
     [[nodiscard]] std::string format_string(std::string arg) const
     {
-        auto ret = move(arg);
+        auto ret = std::move(arg);
         if ((m_precision > 0) && (ret.length() > m_precision)) {
             ret = ret.substr(0, m_precision);
         }
@@ -612,7 +306,7 @@ public:
         : m_start(start)
         , m_length(specifier.length())
         , m_specifier(specifier)
-        , m_prefix(move(prefix))
+        , m_prefix(std::move(prefix))
     {
         if (specifier.empty())
             return;
@@ -653,7 +347,7 @@ public:
             if (ix > 0) {
                 auto num = buffer.read(ix);
                 buffer.reset();
-                return to_long(num).value();
+                return to_long(num);
             }
             return 0;
         };
@@ -767,11 +461,11 @@ static inline std::string format(std::string const& fmt)
 }
 
 template<typename T>
-std::pair<std::string,std::string> format_one(std::string const& fmt, T const& arg)
+std::pair<std::string,std::string> format_one(std::string const& fmt, T arg)
 {
     std::optional<FormatSpecifier> specifier_maybe = FormatSpecifier::first_specifier(fmt);
     if (!specifier_maybe.has_value()) {
-        auto a = Converter<T>().to_string(arg);
+        auto a = to_string<T>(arg);
         fprintf(stderr, "format(\"%s\", \"%s\", ...): Not enough format specifiers\n", fmt.c_str(), a.c_str());
         exit(1);
     }
@@ -781,7 +475,7 @@ std::pair<std::string,std::string> format_one(std::string const& fmt, T const& a
 }
 
 template<typename T, typename... Args>
-std::string format(std::string const& fmt, T const& arg, Args&&... args)
+std::string format(std::string const& fmt, T arg, Args&&... args)
 {
     auto fmt_first_substituted = format_one<T>(fmt, arg);
     return fmt_first_substituted.first + format(fmt_first_substituted.second, std::forward<Args>(args)...);

@@ -17,7 +17,7 @@ public:
 
     explicit BasicParser(StringBuffer& src);
     explicit BasicParser();
-    [[nodiscard]] std::string const& text() const { return m_lexer.buffer().str(); }
+    [[nodiscard]] std::string text() const { return m_lexer.buffer().str(); }
     ErrorOr<void,SystemError> read_file(std::string const&, BufferLocator* locator = nullptr);
     void assign(StringBuffer const&);
     void assign(std::string const&);

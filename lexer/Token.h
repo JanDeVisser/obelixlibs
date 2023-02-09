@@ -17,6 +17,7 @@
 #include <core/Error.h>
 #include <core/Format.h>
 #include <core/Logging.h>
+#include <core/StringUtil.h>
 
 namespace Obelix {
 
@@ -181,7 +182,7 @@ namespace Obelix {
     S(Keyword98, nullptr, nullptr)       \
     S(Keyword99, nullptr, nullptr)
 
-enum class TokenCode {
+enum class TokenCode : int {
 #undef ENUM_TOKEN_CODE
 #define ENUM_TOKEN_CODE(code, c, str) code,
     ENUMERATE_TOKEN_CODES(ENUM_TOKEN_CODE)
@@ -240,23 +241,22 @@ constexpr char const* TokenCode_to_string(TokenCode code)
 
 std::string TokenCode_name(TokenCode);
 
-template<>
-struct Converter<TokenCode> {
-    static std::string to_string(TokenCode val)
-    {
-        return TokenCode_name(val);
-    }
+template <>
+inline std::string to_string(TokenCode val)
+{
+    return TokenCode_name(val);
+}
 
-    static double to_double(TokenCode val)
-    {
-        return static_cast<double>(val);
-    }
+template <>
+inline std::optional<double> try_to_double(TokenCode val)
+{
+    return static_cast<double>(val);
+}
 
-    static long to_long(TokenCode val)
-    {
-        return static_cast<long>(val);
-    }
-};
+inline std::optional<long> try_to_long(TokenCode val)
+{
+    return static_cast<long>(val);
+}
 
 struct Location {
     size_t line { 0 };
@@ -281,51 +281,83 @@ struct Location {
 };
 
 struct Span {
-    std::string file_name;
+    std::string& file_name;
     Location start;
     Location end;
 
-    Span() = default;
-    Span(std::string, Location, Location);
-    Span(std::string, size_t, size_t, size_t, size_t);
+    Span(std::string&, Location, Location);
+    Span(std::string&, size_t, size_t, size_t, size_t);
 
     [[nodiscard]] std::string to_string() const;
     [[nodiscard]] Span merge(Span const&) const;
     [[nodiscard]] bool empty() const;
+
+    Span& operator=(Span const& other)
+    {
+        file_name = other.file_name;
+        start = other.start;
+        end = other.end;
+        return *this;
+    }
+
     bool operator==(Span const& other) const;
 };
 
 class Token {
 public:
-    Token() = default;
-    explicit Token(TokenCode code, std::string value = "")
-        : m_code(code)
-        , m_value(std::move(value))
-    {
-    }
-
-    explicit Token(int code, std::string value = "")
-        : Token((TokenCode)code, std::move(value))
-    {
-    }
-
-    Token(Span location, TokenCode code, std::string value = "")
-        : m_location(std::move(location))
+    Token(Span location, TokenCode code, std::string_view value = {})
+        : m_location(location)
         , m_code(code)
-        , m_value(std::move(value))
+        , m_value(value)
     {
     }
 
-    Token(Span location, int code, std::string value = "")
-        : Token(std::move(location), (TokenCode)code, std::move(value))
+    Token(Span location, int code, std::string_view value = {})
+        : Token(location, static_cast<TokenCode>(code), value)
     {
     }
+
+    Token(Span location, TokenCode code, std::string value)
+        : m_location(location)
+        , m_code(code)
+    {
+        m_value_string = strdup(value.c_str());
+        m_value = std::string_view(m_value_string.value());
+    }
+
+    Token(Span location, TokenCode code, const char* value)
+        : m_location(location)
+        , m_code(code)
+        , m_value(value)
+    {
+    }
+
+    Token(Token const& other)
+        : m_location(other.m_location)
+        , m_code(other.m_code)
+    {
+        if (other.m_value_string.has_value()) {
+            m_value_string = strdup(other.m_value_string.value());
+            m_value = std::string_view(m_value_string.value());
+        } else {
+            m_value = other.m_value;
+        }
+    }
+
+    virtual ~Token()
+    {
+        if (m_value_string.has_value())
+            free(m_value_string.value());
+    }
+
+    Token& operator=(Token const& other) = default;
 
     [[nodiscard]] Span const& location() const { return m_location; }
-    void location(Span location) { m_location = std::move(location); }
+    void location(Span location) { m_location = location; }
     [[nodiscard]] TokenCode code() const { return m_code; }
     [[nodiscard]] std::string code_name() const { return TokenCode_name(code()); }
-    [[nodiscard]] std::string const& value() const { return m_value; }
+    [[nodiscard]] std::string_view const& value() const { return m_value; }
+    [[nodiscard]] std::string string_value() const { return std::string(m_value); }
     [[nodiscard]] std::string to_string() const;
     [[nodiscard]] std::optional<long> to_long() const;
     [[nodiscard]] std::optional<double> to_double() const;
@@ -334,46 +366,30 @@ public:
     [[nodiscard]] bool is_whitespace() const;
 
 private:
-    Span m_location { {}, 0, 0, 0, 0 };
+    Span m_location;
     TokenCode m_code { TokenCode::Unknown };
-    std::string m_value {};
+    std::optional<char *> m_value_string {};
+    std::string_view m_value {};
 };
 
 class SyntaxError {
 public:
-    SyntaxError(Span location, std::string msg)
-        : m_location(std::move(location))
+    SyntaxError(Span const& location, std::string msg)
+        : m_location(location)
         , m_message(std::move(msg))
     {
     }
 
     template<typename... Args>
-    SyntaxError(Span location, std::string message, Args&&... args)
-        : m_location(std::move(location))
+    SyntaxError(Span const& location, std::string message, Args&&... args)
+        : m_location(location)
     {
         m_message = format(message, std::forward<Args>(args)...);
     }
 
     template<typename... Args>
-    SyntaxError(Span location, ErrorCode code, Args&&... args)
-        : m_location(std::move(location))
-    {
-        m_message = format(ErrorCode_message(code), std::forward<Args>(args)...);
-    }
-
-    SyntaxError(std::string msg)
-        : m_message(std::move(msg))
-    {
-    }
-
-    template<typename... Args>
-    SyntaxError(std::string message, Args&&... args)
-    {
-        m_message = format(message, std::forward<Args>(args)...);
-    }
-
-    template<typename... Args>
-    SyntaxError(ErrorCode code, Args&&... args)
+    SyntaxError(Span const& location, ErrorCode code, Args&&... args)
+        : m_location(location)
     {
         m_message = format(ErrorCode_message(code), std::forward<Args>(args)...);
     }
@@ -392,7 +408,7 @@ public:
     }
 
 private:
-    Span m_location {};
+    Span const& m_location;
     std::string m_message;
 };
 
@@ -407,7 +423,7 @@ inline ErrorOr<T, SyntaxError> token_value(Token const& token)
 {
     if (token.code() != TokenCode::Float && token.code() != TokenCode::Integer && token.code() != TokenCode::HexNumber)
         return SyntaxError { token.location(), "Cannot get {} value as {}", token.code(), typeid(T).name() };
-    auto v = to_long_unconditional(token.value());
+    auto v = to_long(token.value());
     if (v < std::numeric_limits<T>::min() || v > std::numeric_limits<T>::max())
         return SyntaxError { token.location(), "Long value {} overflows {}", v, typeid(T).name() };
     return static_cast<T>(v);
@@ -418,7 +434,7 @@ inline ErrorOr<T, SyntaxError> token_value(Token const& token)
 {
     if (token.code() != TokenCode::Float && token.code() != TokenCode::Integer && token.code() != TokenCode::HexNumber)
         return SyntaxError { token.location(), "Cannot get {} value as {}", token.code(), typeid(T).name() };
-    auto v = to_double_unconditional(token.value());
+    auto v = to_double(token.value());
     if (v < std::numeric_limits<T>::min() || v > std::numeric_limits<T>::max())
         return SyntaxError { token.location(), "Float value {} overflows {}", v, typeid(T).name() };
     return static_cast<T>(v);
@@ -431,33 +447,39 @@ inline ErrorOr<std::string, SyntaxError> token_value(Token const& token)
 }
 
 template<>
+inline ErrorOr<std::string_view, SyntaxError> token_value(Token const& token)
+{
+    return token.value();
+}
+
+template<>
 inline ErrorOr<bool, SyntaxError> token_value(Token const& token)
 {
     auto number_maybe = token.to_long();
     if (number_maybe.has_value())
         return number_maybe.value() != 0;
-    auto bool_maybe = Obelix::to_bool(token.value());
+    auto bool_maybe = try_to_bool(token.value());
     if (bool_maybe.has_value())
         return bool_maybe.value();
     return SyntaxError { token.location(), "Cannot convert get {} with value {} as bool", token.code(), token.value() };
 }
 
 template<>
-struct Converter<Token> {
-    static std::string to_string(Token const& t)
-    {
-        return format("{}:{}", t.location().to_string(), t.to_string());
-    }
+inline std::string to_string(Token const& t)
+{
+    return format("{}:{}", t.location().to_string(), t.to_string());
+}
 
-    static double to_double(Token const&)
-    {
-        fatal("Can't convert Token to double");
-    }
+template<>
+inline std::optional<double> try_to_double(Token const&)
+{
+    fatal("Can't convert Token to double");
+}
 
-    static long to_long(Token const&)
-    {
-        fatal("Can't convert Token to long");
-    }
-};
+template<>
+inline std::optional<long> try_to_long(Token const&)
+{
+    fatal("Can't convert Token to long");
+}
 
 }

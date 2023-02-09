@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-//
-// Created by Jan de Visser on 2021-10-05.
-//
-
 #include "lexer/Token.h"
 #include <lexer/Tokenizer.h>
 
@@ -71,7 +67,7 @@ TokenCode NumberScanner::process(Tokenizer& tokenizer, int ch)
     case NumberScannerState::Period:
         if (isdigit(ch)) {
             m_state = NumberScannerState::Float;
-        } else if (m_config.scientific && (ch == 'e') && (tokenizer.token().length() > 1)) {
+        } else if (m_config.scientific && (ch == 'e') && (tokenizer.current_token().length() > 1)) {
             m_state = NumberScannerState::SciFloat;
         } else {
             tokenizer.partial_rewind(1);
@@ -182,7 +178,6 @@ void NumberScanner::match(Tokenizer& tokenizer)
 {
     int ch;
     TokenCode code;
-    Token ret;
 
     for (m_state = NumberScannerState::None;
          (m_state != NumberScannerState::Done) && (m_state != NumberScannerState::Error);) {
@@ -190,7 +185,7 @@ void NumberScanner::match(Tokenizer& tokenizer)
         code = process(tokenizer, ch);
     }
     if (m_state == NumberScannerState::Error) {
-        tokenizer.accept_token(TokenCode::Error, "Malformed number");
+        tokenizer.accept(TokenCode::Error, "Malformed number");
     } else if (code != TokenCode::Unknown) {
         tokenizer.accept(code);
     }

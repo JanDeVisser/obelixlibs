@@ -33,30 +33,28 @@ protected:
 
     void tokenize(std::string const& s)
     {
-        tokenize(s.c_str());
+        m_text = s;
+        tokenize(m_text.c_str());
     }
 
     void tokenize(char const* text = nullptr)
     {
-        tokens = lexer.tokenize(text);
-//        std::cout << tokens.size() << " tokens: ";
-        for (auto& token : tokens) {
-//            std::cout << TokenCode_name(token.code()) << " ";
+        lexer.tokenize(text);
+        for (auto& token : lexer.tokens()) {
             auto tokens_for = tokens_by_code[token.code()];
             tokens_for.push_back(token);
             tokens_by_code[token.code()] = tokens_for;
         }
-//        std::cout << "\n";
     }
 
     void check_codes(size_t count, ...)
     {
-        EXPECT_EQ(count, tokens.size());
+        EXPECT_EQ(count, lexer.tokens().size());
         va_list codes;
         va_start(codes, count);
-        for (auto ix = 0u; (ix < count) && (ix < tokens.size()); ix++) {
+        for (auto ix = 0u; (ix < count) && (ix < lexer.tokens().size()); ix++) {
             Obelix::TokenCode code = va_arg(codes, Obelix::TokenCode);
-            EXPECT_EQ(tokens[ix].code_name(), TokenCode_name(code));
+            EXPECT_EQ(lexer.tokens()[ix].code_name(), TokenCode_name(code));
         }
     }
 
@@ -72,7 +70,6 @@ protected:
         return ret;
     }
 
-    std::vector<Obelix::Token> tokens;
     std::unordered_map<Obelix::TokenCode, std::vector<Obelix::Token>> tokens_by_code {};
 
     void TearDown() override {
@@ -82,4 +79,5 @@ protected:
         return false;
     }
 
+    std::string m_text;
 };

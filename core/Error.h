@@ -11,6 +11,7 @@
 #include <string>
 
 #include <core/Format.h>
+#include <core/StringUtil.h>
 
 namespace Obelix {
 
@@ -66,39 +67,27 @@ enum class ErrorCode {
 std::string ErrorCode_name(ErrorCode);
 std::string ErrorCode_message(ErrorCode);
 
-template<>
-struct Converter<ErrorCode> {
-    static std::string to_string(ErrorCode val)
-    {
-        return ErrorCode_name(val);
-    }
+template <>
+inline std::string to_string(ErrorCode val)
+{
+    return ErrorCode_name(val);
+}
 
-    static double to_double(ErrorCode val)
-    {
-        return static_cast<double>(val);
-    }
+template <>
+inline std::optional<double> try_to_double(ErrorCode val)
+{
+    return static_cast<double>(val);
+}
 
-    static long to_long(ErrorCode val)
-    {
-        return static_cast<long>(val);
-    }
-};
-
+template <>
+inline std::optional<long> try_to_long(ErrorCode val)
+{
+    return static_cast<long>(val);
+}
 
 class SystemError {
 public:
-    SystemError(ErrorCode code, std::string msg = {})
-        : m_code(code)
-        , m_errno(errno)
-        , m_message(std::move(msg))
-    {
-        if (m_message.empty()) {
-            if (m_errno != 0)
-                m_message = strerror(m_errno);
-            else
-                m_message = "No Error";
-        }
-    }
+    explicit SystemError(ErrorCode code, std::string msg = {});
 
     template <typename ...Args>
     SystemError(ErrorCode code, std::string message, Args&&... args)
@@ -112,12 +101,7 @@ public:
     [[nodiscard]] ErrorCode code() const { return m_code; }
     [[nodiscard]] int sys_errno() const { return m_errno; }
 
-    [[nodiscard]] std::string to_string() const
-    {
-        if (m_errno != 0)
-            return format("[{}] {}: {}", m_code, m_message, strerror(m_errno));
-        return format("[{}] {}", m_code, m_message);
-    }
+    [[nodiscard]] std::string to_string() const;
 
 private:
     ErrorCode m_code;

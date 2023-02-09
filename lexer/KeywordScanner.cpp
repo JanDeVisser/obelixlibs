@@ -4,33 +4,23 @@
  * SPDX-License-Identifier: MIT
  */
 
-//
-// Created by Jan de Visser on 2021-10-06.
-//
-
+#include <core/Logging.h>
 #include <lexer/Tokenizer.h>
 
 namespace Obelix {
 
-void KeywordScanner::add_keyword(TokenCode keyword_code)
+void KeywordScanner::add_keyword(TokenCode keyword_code, std::string keyword_token)
 {
-    add_keyword(Token { keyword_code, TokenCode_name(keyword_code) });
-}
-
-void KeywordScanner::add_keyword(Token const& keyword_token)
-{
-    Token token;
-    if (m_case_sensitive) {
-        token = keyword_token;
-    } else {
-        token = Token(keyword_token.code(), to_upper(keyword_token.value()));
-    }
-    Keyword keyword = { token };
-    auto ch = token.value()[token.value().length() - 1];
+    if (keyword_token.empty())
+        keyword_token = TokenCode_name(keyword_code);
+    if (!m_case_sensitive)
+        keyword_token = to_upper(keyword_token);
+    Keyword keyword = { keyword_code, keyword_token };
+    auto& ch = keyword_token.back();
     keyword.is_operator = (!isalnum(ch) && (ch != '_'));
     m_keywords.push_back(keyword);
     std::sort(m_keywords.begin(), m_keywords.end(), [](Keyword const& a, Keyword const& b) {
-        return a.token.value() < b.token.value();
+        return a.token < b.token;
     });
 }
 
@@ -48,7 +38,7 @@ void KeywordScanner::match_character(int ch)
     auto fullmatch = -1;
 
     for (auto ix = m_match_min; ix < m_match_max; ix++) {
-        std::string kw = m_keywords[ix].token.value();
+        std::string kw = m_keywords[ix].token;
         auto cmp = kw.compare(m_scanned);
         if (cmp < 0) {
             m_match_min = ix + 1;
@@ -131,8 +121,6 @@ void KeywordScanner::match_character(int ch)
             : KeywordScannerState::PrefixesMatched;
         break;
     }
-    debug(lexer, "_kw_scanner_match: scanned: '{s}' matchcount: {d} match_min: {d}, match_max: {d} new state {}",
-        m_scanned, m_matchcount, m_match_min, m_match_max, KeywordScannerState_name(m_state));
 }
 
 void KeywordScanner::reset()
@@ -144,10 +132,8 @@ void KeywordScanner::reset()
 
 void KeywordScanner::match(Tokenizer& tokenizer)
 {
-    if (m_keywords.empty()) {
-        debug(lexer, "No keywords...");
+    if (m_keywords.empty())
         return;
-    }
 
     reset();
     bool carry_on { true };
@@ -196,9 +182,8 @@ void KeywordScanner::match(Tokenizer& tokenizer)
         }
     }
 
-    debug(lexer, "KeywordScanner::match returns '{s}' {d}", KeywordScannerState_name(m_state), (int) m_state);
     if ((m_state == KeywordScannerState::FullMatchLost) || (m_state == KeywordScannerState::FullMatch)) {
-        tokenizer.accept(m_keywords[m_fullmatch].token.code());
+        tokenizer.accept(m_keywords[m_fullmatch].token_code);
     }
 }
 

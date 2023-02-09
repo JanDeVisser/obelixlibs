@@ -15,14 +15,14 @@ protected:
     unsigned int prepareWithBig()
     {
         initialize();
-        add_scanner<Obelix::KeywordScanner>(Token(200, "Big"));
+        add_scanner<Obelix::KeywordScanner>(200, "Big");
         return 200;
     }
 
     void prepareWithBigBad(unsigned int* big, unsigned int* bad)
     {
         initialize();
-        add_scanner<Obelix::KeywordScanner>(Token(200, "Big"), Token(201, "Bad"));
+        add_scanner<Obelix::KeywordScanner>(200, "Big", 201, "Bad");
         *big = 200;
         *bad = 201;
     }
@@ -36,8 +36,8 @@ protected:
     {
         auto code = prepareWithBig();
         tokenize(s);
-        EXPECT_EQ(tokens.size(), total_count);
-        for (auto& token : tokens) {
+        EXPECT_EQ(lexer.tokens().size(), total_count);
+        for (auto& token : lexer.tokens()) {
             debug(lexer, "{}", token.to_string());
         }
         EXPECT_EQ(tokens_by_code[(Obelix::TokenCode)code].size(), big_count);
@@ -49,8 +49,8 @@ protected:
         unsigned int big, bad;
         prepareWithBigBad(&big, &bad);
         tokenize(s);
-        debug(lexer, "{}", tokens[0].to_string());
-        EXPECT_EQ(tokens.size(), total_count);
+        debug(lexer, "{}", lexer.tokens()[0].to_string());
+        EXPECT_EQ(lexer.tokens().size(), total_count);
         EXPECT_EQ(tokens_by_code[(Obelix::TokenCode)big].size(), big_count);
         EXPECT_EQ(tokens_by_code[(Obelix::TokenCode)bad].size(), bad_count);
     }
@@ -131,18 +131,18 @@ TEST_F(KeywordTest, keyword_abc)
 {
     initialize();
     add_scanner<Obelix::KeywordScanner>(
-        Token(TokenCode::Keyword0, "abb"),
-        Token(TokenCode::Keyword1, "aca"),
-        Token(TokenCode::Keyword2, "aba"),
-        Token(TokenCode::Keyword3, "aaa"),
-        Token(TokenCode::Keyword4, "aab"),
-        Token(TokenCode::Keyword5, "abc"),
-        Token(TokenCode::Keyword6, "aac"),
-        Token(TokenCode::Keyword7, "acc"),
-        Token(TokenCode::Keyword8, "acb"));
+        TokenCode::Keyword0, "abb",
+        TokenCode::Keyword1, "aca",
+        TokenCode::Keyword2, "aba",
+        TokenCode::Keyword3, "aaa",
+        TokenCode::Keyword4, "aab",
+        TokenCode::Keyword5, "abc",
+        TokenCode::Keyword6, "aac",
+        TokenCode::Keyword7, "acc",
+        TokenCode::Keyword8, "acb");
 
     tokenize("yyz abc ams");
-    EXPECT_EQ(tokens.size(), 6);
+    EXPECT_EQ(lexer.tokens().size(), 6);
     EXPECT_EQ(tokens_by_code[TokenCode::Keyword5].size(), 1);
     EXPECT_EQ(tokens_by_code[Obelix::TokenCode::Identifier].size(), 2);
     EXPECT_EQ(tokens_by_code[Obelix::TokenCode::Whitespace].size(), 2);
@@ -153,13 +153,13 @@ TEST_F(KeywordTest, keyword_for_form)
     //    Logger::get_logger().enable("lexer");
     initialize();
     add_scanner<Obelix::KeywordScanner>(
-        Token(TokenCode::Keyword0, "for"),
-        Token(TokenCode::Keyword1, "format"),
-        Token(TokenCode::Keyword2, "font"),
+        TokenCode::Keyword0, "for",
+        TokenCode::Keyword1, "format",
+        TokenCode::Keyword2, "font",
         TokenCode::GreaterEqualThan);
 
     tokenize("for form format fon font");
-    EXPECT_EQ(tokens.size(), 10);
+    EXPECT_EQ(lexer.tokens().size(), 10);
     EXPECT_EQ(tokens_by_code[Obelix::TokenCode::Identifier].size(), 2);
     EXPECT_EQ(tokens_by_code[Obelix::TokenCode::Keyword0].size(), 1);
     EXPECT_EQ(tokens_by_code[Obelix::TokenCode::Keyword1].size(), 1);
@@ -171,18 +171,18 @@ TEST_F(KeywordTest, keyword_for_format)
     //    Logger::get_logger().enable("lexer");
     initialize();
     add_scanner<Obelix::KeywordScanner>(
-        Token(TokenCode::Keyword0, "for"),
-        Token(TokenCode::Keyword1, "format"),
-        Token(TokenCode::Keyword2, "font"),
+        TokenCode::Keyword0, "for",
+        TokenCode::Keyword1, "format",
+        TokenCode::Keyword2, "font",
         TokenCode::GreaterEqualThan,
-        Token(TokenCode::Keyword4, "aab"),
-        Token(TokenCode::Keyword5, "abc"),
-        Token(TokenCode::Keyword6, "aac"),
-        Token(TokenCode::Keyword7, "acc"),
-        Token(TokenCode::Keyword8, "acb"));
+        TokenCode::Keyword4, "aab",
+        TokenCode::Keyword5, "abc",
+        TokenCode::Keyword6, "aac",
+        TokenCode::Keyword7, "acc",
+        TokenCode::Keyword8, "acb");
 
     tokenize("xxx for format font fo formatting >=xxx form");
-    EXPECT_EQ(tokens.size(), 17);
+    EXPECT_EQ(lexer.tokens().size(), 17);
     EXPECT_EQ(tokens_by_code[TokenCode::Keyword0].size(), 1);
     EXPECT_EQ(tokens_by_code[TokenCode::Keyword1].size(), 1);
     EXPECT_EQ(tokens_by_code[TokenCode::Keyword2].size(), 1);

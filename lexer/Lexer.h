@@ -15,7 +15,7 @@ namespace Obelix {
 class Lexer {
 public:
     explicit Lexer(char const* = nullptr, std::string = {});
-    explicit Lexer(StringBuffer, std::string = {});
+    explicit Lexer(StringBuffer&, std::string = {});
 
     template<typename... Args>
     void filter_codes(TokenCode code, Args&&... args)
@@ -28,16 +28,16 @@ public:
     {
     }
 
-    void assign(char const*, std::string = {});
-    void assign(std::string const&, std::string = {});
+    void assign(char const* buffer, std::string file_name={}, bool take_ownership=false);
+    void assign(std::string buffer, std::string = {});
     [[nodiscard]] StringBuffer const& buffer() const;
-    std::vector<Token> const& tokenize(char const* = nullptr, std::string = {});
+    std::vector<Token> const& tokenize(char const* buffer=nullptr, std::string file_name={}, bool take_ownership=false);
     [[nodiscard]] std::vector<Token> const& tokens() const;
     void invalidate();
     void rewind();
     Token const& peek(size_t = 0);
     Token const& lex();
-    Token const& replace(Token);
+    Token const& replace(Token const&);
     std::optional<Token const> match(TokenCode);
     TokenCode current_code();
     bool expect(TokenCode);
@@ -58,7 +58,7 @@ public:
 
 private:
     std::string m_file_name;
-    StringBuffer m_buffer;
+    std::unique_ptr<StringBuffer> m_buffer;
     std::vector<Token> m_tokens {};
     size_t m_current { 0 };
     std::vector<size_t> m_bookmarks {};

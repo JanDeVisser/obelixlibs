@@ -4,38 +4,91 @@
  * SPDX-License-Identifier: MIT
  */
 
-//
-// Created by Jan de Visser on 2021-10-06.
-//
-
+#include <core/Logging.h>
 #include <core/StringBuffer.h>
 
 namespace Obelix {
 
+logging_category(stringbuffer);
+
+StringBuffer::StringBuffer(StringBuffer& other)
+    : m_buffer_string(other.m_buffer_string)
+    , m_char_buffer(other.m_char_buffer)
+{
+    other.m_buffer_string = {};
+    other.m_char_buffer = {};
+    if (m_buffer_string.has_value()) {
+        m_buffer = m_buffer_string->c_str();
+    } else if (m_char_buffer.has_value()) {
+        m_buffer = m_char_buffer.value();
+    } else {
+        m_buffer = other.m_buffer;
+    }
+}
+
+StringBuffer::StringBuffer(StringBuffer&& other) noexcept
+    : m_buffer_string(std::move(other.m_buffer_string))
+    , m_char_buffer(std::move(other.m_char_buffer))
+{
+    if (m_buffer_string.has_value()) {
+        m_buffer = m_buffer_string->c_str();
+    } else if (m_char_buffer.has_value()) {
+        m_buffer = m_char_buffer.value();
+    } else {
+        m_buffer = other.m_buffer;
+    }
+}
+
 StringBuffer::StringBuffer(std::string str)
-    : m_buffer(move(str))
+    : m_buffer_string(std::move(str))
+    , m_buffer(m_buffer_string.value().c_str())
 {
 }
 
-StringBuffer::StringBuffer(std::string_view const& str)
-    : StringBuffer(std::string(str))
+StringBuffer::StringBuffer(std::string_view str)
+    : m_buffer(str)
 {
 }
 
-StringBuffer::StringBuffer(char const* str)
-    : StringBuffer(std::string(str ? str : ""))
+StringBuffer::StringBuffer(char const* str, bool take_ownership)
 {
+    if (take_ownership && str)
+        m_char_buffer = str;
+    m_buffer = (str) ? str : "";
+}
+
+StringBuffer::~StringBuffer()
+{
+    if (m_char_buffer.has_value())
+        delete[] m_char_buffer.value();
 }
 
 StringBuffer& StringBuffer::assign(std::string buffer)
 {
-    m_buffer = move(buffer);
+    if (m_char_buffer.has_value())
+        delete[] m_char_buffer.value();
+    m_char_buffer = {};
+    m_buffer_string = std::move(buffer);
+    m_buffer = m_buffer_string.value().c_str();
     rewind();
     return *this;
 }
 
-StringBuffer& StringBuffer::assign(const char* buffer)
+StringBuffer& StringBuffer::assign(const char* buffer, bool take_ownership)
 {
+    if (buffer == nullptr) {
+        assign(std::string(""));
+        rewind();
+        return *this;
+    }
+    if (take_ownership) {
+        if (m_char_buffer.has_value()) {
+            delete[] m_char_buffer.value();
+            m_char_buffer = {};
+        }
+        m_char_buffer = buffer;
+    }
+    m_buffer_string = {};
     m_buffer = buffer;
     rewind();
     return *this;
@@ -43,7 +96,20 @@ StringBuffer& StringBuffer::assign(const char* buffer)
 
 StringBuffer& StringBuffer::assign(StringBuffer buffer)
 {
-    m_buffer = move(buffer.m_buffer);
+    if (m_char_buffer.has_value()) {
+        delete[] m_char_buffer.value();
+        m_char_buffer = {};
+    }
+    if (buffer.m_buffer_string.has_value()) {
+        m_buffer_string = std::move(buffer.m_buffer_string.value());
+        m_buffer = m_buffer_string.value().c_str();
+    } else if (buffer.m_char_buffer.has_value()) {
+        m_char_buffer = buffer.m_char_buffer;
+        buffer.m_char_buffer = {};
+        m_buffer = m_char_buffer.value();
+    } else {
+        m_buffer = buffer.m_buffer;
+    }
     rewind();
     return *this;
 }
@@ -65,27 +131,24 @@ void StringBuffer::partial_rewind(size_t num)
     m_pos -= num;
 }
 
-void StringBuffer::pushback()
+[[maybe_unused]] void StringBuffer::pushback()
 {
     if (m_pos > m_mark)
         m_pos--;
 }
 
-std::string StringBuffer::read(size_t num)
+std::string_view StringBuffer::read(size_t num)
 {
-    if ((m_pos + num) > m_buffer.length()) {
+    if (static_cast<int>(num) < 0)
+        num = 0;
+    if ((m_pos + num) > m_buffer.length())
         num = m_buffer.length() - m_pos;
-    }
-    if (num > 0) {
-        auto ret = m_buffer.substr(m_pos, num);
-        m_pos = m_pos + num;
-        return ret;
-    } else {
-        return "";
-    }
+    auto ret = m_buffer.substr(m_pos, num);
+    m_pos = m_pos + num;
+    return ret;
 }
 
-std::string StringBuffer::scanned_string() const
+std::string_view StringBuffer::scanned_string() const
 {
     return m_buffer.substr(m_mark, m_pos-m_mark);
 }
@@ -97,9 +160,7 @@ int StringBuffer::peek(size_t num) const
 
 int StringBuffer::readchar()
 {
-    auto ret = peek();
-    m_pos++;
-    return ret;
+    return (m_pos < m_buffer.length() - 1) ? m_buffer[++m_pos] : 0;
 }
 
 bool StringBuffer::top() const
@@ -145,7 +206,7 @@ bool StringBuffer::is_one_of(std::string const& str, size_t offset) const
     return str.find_first_of(static_cast<char>(peek(offset))) != std::string::npos;
 }
 
-bool StringBuffer::expect_one_of(std::string const& str, size_t offset)
+[[maybe_unused]] bool StringBuffer::expect_one_of(std::string const& str, size_t offset)
 {
     if (is_one_of(str, offset)) {
         m_pos += offset + 1;

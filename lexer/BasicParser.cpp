@@ -30,11 +30,11 @@ BasicParser::BasicParser()
 
 ErrorOr<void,SystemError> BasicParser::read_file(std::string const& file_name, BufferLocator* locator)
 {
-    auto buffer = TRY(FileBuffer::create(file_name, locator));
+    auto buffer = TRY(FileBuffer::from_file(file_name, locator));
 
     m_file_name = file_name;
     m_file_path = buffer->file_path();
-    m_lexer.assign(buffer->buffer()->str(), m_file_name);
+    m_lexer.assign(buffer->str(), m_file_name);
     return {};
 }
 
@@ -56,7 +56,8 @@ void BasicParser::assign(std::vector<std::string> const& src)
 }
 
 
-static Token s_eof(TokenCode::EndOfFile, "EOF triggered by lexer error");
+static std::string s_dummy = "[dummy]";
+static Token s_eof(Span { s_dummy, 0, 0, 0, 0 }, TokenCode::EndOfFile, "EOF triggered by lexer error");
 
 std::vector<Token> const& BasicParser::tokens() const
 {
@@ -79,7 +80,7 @@ Token const& BasicParser::peek()
     debug(lexer, "Parser::peek(): {}", ret.to_string());
     if (ret.code() != TokenCode::Error)
         return ret;
-    add_error(ret, ret.value());
+    add_error(ret, ret.string_value());
     return s_eof;
 }
 
@@ -94,7 +95,7 @@ Token const& BasicParser::lex()
     debug(lexer, "Parser::lex(): {}", ret.to_string());
     if (ret.code() != TokenCode::Error)
         return ret;
-    add_error(ret, ret.value());
+    add_error(ret, ret.string_value());
     return s_eof;
 }
 
@@ -104,7 +105,7 @@ Token const& BasicParser::replace(Token token)
     debug(lexer, "Parser::replace({}): {}", peek(), ret);
     if (ret.code() != TokenCode::Error)
         return ret;
-    add_error(ret, ret.value());
+    add_error(ret, ret.string_value());
     return s_eof;
 }
 
@@ -151,7 +152,7 @@ bool BasicParser::expect(char const* expected, char const* where)
 {
     debug(lexer, "Parser::expect({})", expected);
     auto token = peek();
-    if (strcmp(token.value().c_str(), expected)) {
+    if (strcmp(token.value().data(), expected)) {
         if (where)
             add_error(token, "Expected '{}' {}, got '{}' ({})", expected, where, token.value(), token.code_name());
         else

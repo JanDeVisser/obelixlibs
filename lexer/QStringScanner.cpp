@@ -54,27 +54,28 @@ void QStringScanner::match(Tokenizer& tokenizer)
             } else if (ch == '\\') {
                 if (!m_verbatim) {
                     tokenizer.discard();
+                    m_state = QStrState::Escape;
                 } else {
                     tokenizer.push();
                 }
-                m_state = QStrState::Escape;
             } else {
                 tokenizer.push();
             }
             break;
 
         case QStrState::Escape:
-            if (!m_verbatim) {
-                if (ch == 'r') {
-                    tokenizer.push_as('\r');
-                } else if (ch == 'n') {
-                    tokenizer.push_as('\n');
-                } else if (ch == 't') {
-                    tokenizer.push_as('\t');
-                } else {
-                    tokenizer.push();
-                }
-            } else {
+            assert(!m_verbatim);
+            switch (ch) {
+            case 'r':
+                tokenizer.push_as('\r');
+                break;
+            case 'n':
+                tokenizer.push_as('\n');
+                break;
+            case 't':
+                tokenizer.push_as('\t');
+                break;
+            default:
                 tokenizer.push();
             }
             m_state = QStrState::QString;
@@ -85,7 +86,7 @@ void QStringScanner::match(Tokenizer& tokenizer)
         }
     }
     if (!ch && ((m_state == QStrState::QString) || (m_state == QStrState::Escape))) {
-        tokenizer.accept_token(TokenCode::Error, "Unterminated string");
+        tokenizer.accept(TokenCode::Error, "Unterminated string");
     }
 }
 

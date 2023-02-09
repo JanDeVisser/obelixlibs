@@ -106,7 +106,7 @@ void CommentScanner::find_end_marker(Tokenizer& tokenizer)
         }
     }
     if (!ch) {
-        tokenizer.accept_token(TokenCode::Error, "Unterminated comment");
+        tokenizer.accept(TokenCode::Error, "Unterminated comment");
     }
     debug(lexer, "find_end_marker end of function");
 }
