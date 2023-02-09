@@ -18,7 +18,7 @@ namespace Obelix {
 namespace fs=std::filesystem;
 
 template <>
-std::string to_string(fs::path value)
+inline std::string to_string(fs::path value)
 {
     return value.string();
 }
