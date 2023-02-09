@@ -262,22 +262,9 @@ struct Location {
     size_t line { 0 };
     size_t column { 0 };
 
-    bool operator==(Location const& other) const
-    {
-        return line == other.line && column == other.column;
-    }
-
-    bool operator<(Location const& other) const
-    {
-        if (line == other.line)
-            return column < other.column;
-        return line < other.line;
-    }
-
-    [[nodiscard]] std::string to_string() const
-    {
-        return format("{}:{}", line, column);
-    }
+    bool operator==(Location const& other) const;
+    bool operator<(Location const& other) const;
+    [[nodiscard]] std::string to_string() const;
 };
 
 struct Span {
@@ -285,6 +272,7 @@ struct Span {
     Location start;
     Location end;
 
+    Span();
     Span(std::string&, Location, Location);
     Span(std::string&, size_t, size_t, size_t, size_t);
 
@@ -292,19 +280,13 @@ struct Span {
     [[nodiscard]] Span merge(Span const&) const;
     [[nodiscard]] bool empty() const;
 
-    Span& operator=(Span const& other)
-    {
-        file_name = other.file_name;
-        start = other.start;
-        end = other.end;
-        return *this;
-    }
-
+    Span& operator=(Span const& other);
     bool operator==(Span const& other) const;
 };
 
 class Token {
 public:
+    Token() = default;
     Token(Span location, TokenCode code, std::string_view value = {})
         : m_location(location)
         , m_code(code)

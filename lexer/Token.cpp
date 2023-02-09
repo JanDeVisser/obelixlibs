@@ -24,6 +24,30 @@ std::string TokenCode_name(TokenCode t)
     }
 }
 
+bool Location::operator==(Location const& other) const
+{
+    return line == other.line && column == other.column;
+}
+
+bool Location::operator<(Location const& other) const
+{
+    if (line == other.line)
+        return column < other.column;
+    return line < other.line;
+}
+
+std::string Location::to_string() const
+{
+    return format("{}:{}", line, column);
+}
+
+static std::string s_empty = "";
+
+Span::Span()
+    : file_name(s_empty)
+{
+}
+
 Span::Span(std::string& fname, Location loc_1, Location loc_2)
     : file_name(fname)
     , start(loc_1)
@@ -52,6 +76,15 @@ std::string Span::to_string() const
 [[nodiscard]] bool Span::empty() const
 {
     return start == end;
+}
+
+
+Span& Span::operator=(Span const& other)
+{
+    file_name = other.file_name;
+    start = other.start;
+    end = other.end;
+    return *this;
 }
 
 bool Span::operator==(Span const& other) const
