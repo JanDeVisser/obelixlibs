@@ -44,6 +44,12 @@ void Lexer::assign(std::string text, std::string file_name)
     invalidate();
 }
 
+void Lexer::assign(StringBuffer&& buffer, std::string file_name)
+{
+    m_file_name = std::move(file_name);
+    m_buffer = std::make_unique<StringBuffer>(buffer);
+}
+
 StringBuffer const& Lexer::buffer() const
 {
     return *m_buffer;

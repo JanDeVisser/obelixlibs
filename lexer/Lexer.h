@@ -30,6 +30,7 @@ public:
 
     void assign(char const* buffer, std::string file_name={}, bool take_ownership=false);
     void assign(std::string buffer, std::string = {});
+    void assign(StringBuffer&& buffer, std::string = {});
     [[nodiscard]] StringBuffer const& buffer() const;
     std::vector<Token> const& tokenize(char const* buffer=nullptr, std::string file_name={}, bool take_ownership=false);
     [[nodiscard]] std::vector<Token> const& tokens() const;
