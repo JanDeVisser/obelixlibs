@@ -34,7 +34,7 @@ ErrorOr<void,SystemError> BasicParser::read_file(std::string const& file_name, B
 
     m_file_name = file_name;
     m_file_path = buffer->file_path();
-    m_lexer.assign(buffer->str(), m_file_name);
+    m_lexer.assign(std::move(*buffer), m_file_name);
     return {};
 }
 
