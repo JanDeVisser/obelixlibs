@@ -28,7 +28,7 @@ StringBuffer::StringBuffer(StringBuffer& other)
 
 StringBuffer::StringBuffer(StringBuffer&& other) noexcept
     : m_buffer_string(std::move(other.m_buffer_string))
-    , m_char_buffer(std::move(other.m_char_buffer))
+    , m_char_buffer(other.m_char_buffer)
 {
     if (m_buffer_string.has_value()) {
         m_buffer = m_buffer_string->c_str();
@@ -37,6 +37,8 @@ StringBuffer::StringBuffer(StringBuffer&& other) noexcept
     } else {
         m_buffer = other.m_buffer;
     }
+    other.m_char_buffer = {};
+    other.m_buffer_string = {};
 }
 
 StringBuffer::StringBuffer(std::string str)
@@ -70,7 +72,7 @@ StringBuffer& StringBuffer::assign(std::string buffer)
     m_char_buffer = {};
     m_buffer_string = std::move(buffer);
     m_buffer = m_buffer_string.value().c_str();
-    rewind();
+    m_pos = m_mark = 0;
     return *this;
 }
 
@@ -90,7 +92,7 @@ StringBuffer& StringBuffer::assign(const char* buffer, bool take_ownership)
     }
     m_buffer_string = {};
     m_buffer = buffer;
-    rewind();
+    m_pos = m_mark = 0;
     return *this;
 }
 
@@ -110,7 +112,7 @@ StringBuffer& StringBuffer::assign(StringBuffer buffer)
     } else {
         m_buffer = buffer.m_buffer;
     }
-    rewind();
+    m_pos = m_mark = 0;
     return *this;
 }
 
