@@ -53,6 +53,9 @@ FileBuffer::FileBuffer(fs::path path, char const* text, bool take_ownership)
 
 ErrorOr<FileBuffer*, SystemError> FileBuffer::from_file(std::string const& file_name, BufferLocator* locator)
 {
+    static SimpleBufferLocator s_simple_locator;
+    if (locator == nullptr)
+        locator = &s_simple_locator;
     auto file_name_or_error = locator->locate(file_name);
     if (file_name_or_error.is_error())
         return file_name_or_error.error();
