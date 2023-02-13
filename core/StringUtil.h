@@ -59,7 +59,7 @@ inline std::string join(std::vector<ElementType> const& collection, char sep, To
 template <std::integral Int>
 [[nodiscard]] inline std::string integer_to_string(Int integer, int radix = 10, char grouping_char = '\0')
 {
-    char buf[128];
+    thread_local static char buf[128];
     char* ptr = &buf[127];
     *ptr = 0;
 
@@ -73,9 +73,9 @@ template <std::integral Int>
     do {
         if (grouping_char && (++ix % 3) == 0)
             *(--ptr) = grouping_char;
-        *(--ptr) = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"[integer % radix];
-        integer /= radix;
-    } while (integer > 0);
+        *(--ptr) = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"[integer_pos % radix];
+        integer_pos /= radix;
+    } while (integer_pos > 0);
     if (std::is_signed_v<Int> && (integer < 0)) {
         *(--ptr) = '-';
     }
