@@ -242,21 +242,28 @@ constexpr char const* TokenCode_to_string(TokenCode code)
 std::string TokenCode_name(TokenCode);
 
 template <>
-inline std::string to_string(TokenCode val)
-{
-    return TokenCode_name(val);
-}
+struct to_string<TokenCode> {
+    std::string operator()(TokenCode value)
+    {
+        return TokenCode_name(value);
+    }
+};
 
 template <>
-inline std::optional<double> try_to_double(TokenCode val)
-{
-    return static_cast<double>(val);
-}
+struct try_to_double<TokenCode> {
+    std::optional<double> operator()(TokenCode value)
+    {
+        return static_cast<double>(value);
+    }
+};
 
-inline std::optional<long> try_to_long(TokenCode val)
-{
-    return static_cast<long>(val);
-}
+template <>
+struct try_to_long<TokenCode> {
+    std::optional<long> operator()(TokenCode value)
+    {
+        return static_cast<long>(value);
+    }
+};
 
 struct Location {
     size_t line { 0 };
@@ -390,7 +397,7 @@ public:
     }
 
 private:
-    Span const& m_location;
+    Span m_location;
     std::string m_message;
 };
 
@@ -440,28 +447,18 @@ inline ErrorOr<bool, SyntaxError> token_value(Token const& token)
     auto number_maybe = token.to_long();
     if (number_maybe.has_value())
         return number_maybe.value() != 0;
-    auto bool_maybe = try_to_bool(token.value());
+    auto bool_maybe = try_to_bool<std::string_view>()(token.value());
     if (bool_maybe.has_value())
         return bool_maybe.value();
     return SyntaxError { token.location(), "Cannot convert get {} with value {} as bool", token.code(), token.value() };
 }
 
 template<>
-inline std::string to_string(Token const& t)
-{
-    return format("{}:{}", t.location().to_string(), t.to_string());
-}
-
-template<>
-inline std::optional<double> try_to_double(Token const&)
-{
-    fatal("Can't convert Token to double");
-}
-
-template<>
-inline std::optional<long> try_to_long(Token const&)
-{
-    fatal("Can't convert Token to long");
-}
+struct to_string<Token> {
+    std::string operator()(Token const& t)
+    {
+        return format("{}:{}", t.location().to_string(), t.to_string());
+    }
+};
 
 }

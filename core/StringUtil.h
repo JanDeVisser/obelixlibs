@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-//
-// Created by Jan de Visser on 2021-09-20.
-//
-
 #pragma once
 
 #include <map>
@@ -85,9 +81,19 @@ template <std::integral Int>
 template <std::integral Int, typename Str=std::string>
 [[nodiscard]] inline std::optional<Int> string_to_integer(Str const& s, int radix = 0)
 {
-    int start { 0 };
-    for (start = 0; isspace(s[start]) && start < s.length(); ++start);
+    int start;
+    int sign = 1;
+    for (start = 0; isspace(s[start]) && start < s.length(); ++start)
+        ;
     auto ch = s[start];
+    if (ch == '-') {
+        if (std::is_unsigned_v<Int>) {
+            return {};
+        }
+        sign = -1;
+        ++start;
+    }
+
     switch (ch) {
     case '0': {
         if (start < s.length() - 2) {
@@ -99,7 +105,7 @@ template <std::integral Int, typename Str=std::string>
                 start += 2;
             } break;
             case 'B': {
-                if (radix != 0 && radix != 16)
+                if (radix != 0 && radix != 2)
                     return {};
                 radix = 16;
                 start += 2;
@@ -118,6 +124,7 @@ template <std::integral Int, typename Str=std::string>
     default:
         break;
     }
+
     if (radix == 0)
         radix = 10;
     assert(radix < 36);
@@ -142,198 +149,181 @@ template <std::integral Int, typename Str=std::string>
         val += digit * exp;
         exp *= radix;
     }
-    return val;
+    return val * sign;
 }
 
 // -- to_string -------------------------------------------------------------
 
 template<typename T>
-inline std::string to_string(T value)
-{
-    return value.to_string();
-}
+struct to_string {
+    std::string operator()(T const& value)
+    {
+        return value.to_string();
+    }
+};
+
+template<typename T>
+struct to_string<T*> {
+    std::string operator()(T const* value)
+    {
+        return to_string<T>()(*value);
+    }
+};
 
 template<>
-inline std::string to_string(std::string const& value)
-{
-    return value;
-}
+struct to_string<std::string> {
+    std::string operator()(std::string const& value)
+    {
+        return value;
+    }
+};
 
 template<>
-inline std::string to_string(std::string value)
-{
-    return value;
-}
+struct to_string<std::string_view> {
+    std::string operator()(std::string_view const& value)
+    {
+        return static_cast<std::string>(value);
+    }
+};
 
 template<>
-inline std::string to_string(std::string* value)
-{
-    return *value;
-}
+struct to_string<char*> {
+    std::string operator()(char const* value)
+    {
+        return { value };
+    }
+};
 
 template<>
-inline std::string to_string(std::string_view const& value)
-{
-    return static_cast<std::string>(value);
-}
-
-template<>
-inline std::string to_string(std::string_view value)
-{
-    return static_cast<std::string>(value);
-}
-
-template<>
-inline std::string to_string(char* value)
-{
-    return { value };
-}
-
-template<>
-inline std::string to_string(char const* value)
-{
-    return { value };
-}
+struct to_string<void*> {
+    std::string operator()(void const* value)
+    {
+        return integer_to_string(reinterpret_cast<uintptr_t>(value));
+    }
+};
 
 template<int N>
-inline std::string to_string(char value[N])
-{
-    return { value };
-}
-
-template<int N>
-inline std::string to_string(char const value[N])
-{
-    return { value };
-}
+struct to_string<char[N]> {
+    std::string operator()(char const value[N])
+    {
+        return { value };
+    }
+};
 
 template <std::integral T>
-inline std::string to_string(T value)
-{
-    return integer_to_string(value);
-}
+struct to_string<T> {
+    std::string operator()(T value)
+    {
+        return integer_to_string(value);
+    }
+};
 
 template<std::unsigned_integral T>
-std::string to_hex_string(T value)
-{
-    return integer_to_string(value, 16);
-}
+struct to_hex_string {
+    std::string operator()(T value)
+    {
+        return integer_to_string(value, 16);
+    }
+};
 
-template <>
-inline std::string to_string(void* val)
-{
-    return integer_to_string(reinterpret_cast<uintptr_t>(val));
-}
-
-template<std::floating_point Float>
-inline std::string to_string(Float value)
-{
-    return std::to_string(value);
-}
+template <std::floating_point Float>
+struct to_string<Float> {
+    std::string operator()(Float value)
+    {
+        return std::to_string(value);
+    }
+};
 
 template<>
-inline std::string to_string(bool const& value)
-{
-    return (value) ? "true" : "false";
-}
+struct to_string<bool> {
+    std::string operator()(bool value)
+    {
+        return (value) ? "true" : "false";
+    }
+};
 
 template <typename T>
-inline std::string to_string(std::shared_ptr<T> value)
-{
-    if (value == nullptr)
-        return "(null)";
-    return to_string<T>(*value);
-}
+struct to_string<std::shared_ptr<T>> {
+    std::string operator()(std::shared_ptr<T> value)
+    {
+        if (value == nullptr)
+            return "(null)";
+        return to_string<T>()(*value);
+    }
+};
 
 template <typename T>
-inline std::string to_string(std::unique_ptr<T> value)
-{
-    if (value == nullptr)
-        return "(null)";
-    return to_string<T>(*value);
-}
+struct to_string<std::unique_ptr<T>> {
+    std::string operator()(std::unique_ptr<T> value)
+    {
+        if (value == nullptr)
+            return "(null)";
+        return to_string<T>(*value);
+    }
+};
 
 template <typename T>
-inline std::string to_string(std::vector<T> const& value)
-{
-    return join(value, ", ", [](T elem) { return elem.to_string(); });
-}
-
-template <typename T>
-inline std::string to_string(std::vector<T*> const& value)
-{
-    return join(value, ", ", [](T* elem) { return elem->to_string(); });
-}
-
-template <typename T>
-inline std::string to_string(std::vector<std::shared_ptr<T>> const& value)
-{
-    return join(value, ", ", [](std::shared_ptr<T> elem) { return elem->to_string(); });
-}
-
-template <typename T>
-inline std::string to_string(std::vector<std::unique_ptr<T>> const& value)
-{
-    return join(value, ", ", [](std::unique_ptr<T> elem) { return elem->to_string(); });
-}
+struct to_string<std::vector<T>> {
+    std::string operator()(std::vector<T> const& value)
+    {
+        return join(value, ", ", [](T elem) { return to_string<T>()(elem); });
+    }
+};
 
 // -- to_long ---------------------------------------------------------------
 
 template <typename T>
-inline std::optional<long> try_to_long(T str)
-{
-    return string_to_integer<long>(to_string(str));
-}
-
-/*
-template <>
-inline std::optional<long> try_to_long(std::string str)
-{
-    return string_to_integer<long>(str);
-}
- */
+struct try_to_long {
+    std::optional<long> operator()(T value)
+    {
+        return string_to_integer<long>(to_string<T>()(value));
+    }
+};
 
 template <>
-inline std::optional<long> try_to_long(std::string const& str)
-{
-    return string_to_integer<long>(str);
-}
+struct try_to_long<std::string> {
+    std::optional<long> operator()(std::string const& value)
+    {
+        return string_to_integer<long>(value);
+    }
+};
 
 template <>
-inline std::optional<long> try_to_long(std::string_view const& str)
-{
-    return string_to_integer<long>(str);
-}
+struct try_to_long<bool> {
+    std::optional<long> operator()(bool value)
+    {
+        return (value) ? 1 : 0;
+    }
+};
 
 template <std::integral Int>
-inline std::optional<long> try_to_long(Int val)
-{
-    return static_cast<long>(val);
-}
+struct try_to_long<Int> {
+    std::optional<long> operator()(Int value)
+    {
+        return value;
+    }
+};
 
 template <std::floating_point Float>
-inline std::optional<long> try_to_long(Float val)
-{
-    return val;
-}
-
-template <>
-inline std::optional<long> try_to_long(bool value)
-{
-    return (value) ? 1 : 0;
-}
-
+struct try_to_long<Float> {
+    std::optional<long> operator()(Float value)
+    {
+        return value;
+    }
+};
 
 template <typename T>
-std::string try_to_long(std::vector<T> const& value)
-{
-    return value.size();
-}
+struct try_to_long<std::vector<T>> {
+    std::optional<long> operator()(std::vector<T> value)
+    {
+        return value.size();
+    }
+};
 
 template <typename T=std::string>
-long to_long(T str)
+long to_long(T value)
 {
-    auto ret = try_to_long(str);
+    auto ret = try_to_long<T>()(value);
     assert(ret.has_value());
     return ret.value();
 }
@@ -341,71 +331,63 @@ long to_long(T str)
 // -- to_ulong --------------------------------------------------------------
 
 template <typename T>
-inline std::optional<unsigned long> try_to_ulong(T value)
-{
-    if (auto signed_long = try_to_long(value); signed_long.has_value())
-        return signed_long.value();
-    return {};
-}
+struct try_to_ulong {
+    std::optional<unsigned long> operator()(T value)
+    {
+        auto l = try_to_long<T>()(value);
+        if (!l.has_value() || (l.value() < 0))
+            return {};
+        return l.value();
+    }
+};
 
 template <>
-inline std::optional<unsigned long> try_to_ulong(std::string const& str)
-{
-    return string_to_integer<unsigned long>(str);
-}
+struct try_to_ulong<std::string> {
+    std::optional<unsigned long> operator()(std::string const& value)
+    {
+        return string_to_integer<unsigned long>(value);
+    }
+};
 
 template <std::unsigned_integral UInt>
-inline std::optional<unsigned long> try_to_ulong(UInt val)
-{
-    return static_cast<unsigned long>(val);
-}
+struct try_to_ulong<UInt> {
+    std::optional<unsigned long> operator()(UInt value)
+    {
+        return value;
+    }
+};
 
 template <std::signed_integral SInt>
-inline std::optional<unsigned long> try_to_ulong(SInt val)
-{
-    if (val < 0)
-        return {};
-    return static_cast<unsigned long>(val);
-}
+struct try_to_ulong<SInt> {
+    std::optional<unsigned long> operator()(SInt value)
+    {
+        if (value < 0)
+            return {};
+        return value;
+    }
+};
 
 template <std::floating_point Float>
-inline std::optional<unsigned long> try_to_ulong(Float val)
-{
-    if (val < 0)
-        return {};
-    return val;
-}
-
-template <>
-inline std::optional<unsigned long> try_to_ulong(bool value)
-{
-    return (value) ? 1 : 0;
-}
-
-template <typename T>
-inline std::optional<unsigned long> try_to_ulong(std::vector<T> const& value)
-{
-    return value.size();
-}
+struct try_to_ulong<Float> {
+    std::optional<unsigned long> operator()(Float value)
+    {
+        if (value < 0)
+            return {};
+        return value;
+    }
+};
 
 template <typename T=std::string>
-inline unsigned long to_ulong(T str)
+inline unsigned long to_ulong(T value)
 {
-    auto ret = try_to_long(str);
+    auto ret = try_to_ulong(value);
     assert(ret.has_value());
     return ret.value();
 }
 
 // -- to_double -------------------------------------------------------------
 
-template <typename T>
-inline std::optional<double> try_to_double(T str)
-{
-    return try_to_double(to_string(str));
-}
-
-template <>
-inline std::optional<double> try_to_double(std::string str)
+inline std::optional<double> string_to_double(std::string const& str)
 {
     char* end;
     errno = 0;
@@ -421,28 +403,42 @@ inline std::optional<double> try_to_double(std::string str)
     return ret;
 }
 
-template <std::integral Int>
-inline std::optional<double> try_to_double(Int value)
-{
-    return static_cast<double>(value);
-}
-
-template <std::floating_point Float>
-inline std::optional<double> try_to_double(Float value)
-{
-    return value;
-}
+template <typename T>
+struct try_to_double {
+    std::optional<double> operator()(T value)
+    {
+        return string_to_double(to_string<T>()(value));
+    }
+};
 
 template <>
-inline std::optional<double> try_to_double(bool value)
-{
-    return (value) ? 1.0 : 0.0;
-}
+struct try_to_double<std::string> {
+    std::optional<double> operator()(std::string const& value)
+    {
+        return string_to_double(value);
+    }
+};
+
+template <std::integral Int>
+struct try_to_double<Int> {
+    std::optional<double> operator()(Int value)
+    {
+        return value;
+    }
+};
+
+template <std::floating_point Float>
+struct try_to_double<Float> {
+    std::optional<double> operator()(Float value)
+    {
+        return value;
+    }
+};
 
 template <typename T=std::string>
-inline double to_double(T str)
+inline double to_double(T value)
 {
-    auto ret = try_to_double(str);
+    auto ret = try_to_double<T>()(value);
     assert(ret.has_value());
     return ret.value();
 }
@@ -450,30 +446,34 @@ inline double to_double(T str)
 // -- to_bool ---------------------------------------------------------------
 
 template <typename T>
-inline std::optional<bool> try_to_bool(T value)
-{
-    if (auto l = try_to_long(value); l.has_value())
-        return try_to_bool(l.value());
-    return {};
-}
+struct try_to_bool {
+    std::optional<bool> operator()(T value)
+    {
+        if (auto l = try_to_long<T>()(value); l.has_value())
+            return l.value();
+        return {};
+    }
+};
 
 template <>
-inline std::optional<bool> try_to_bool(std::string const& str)
-{
-    if (stricmp(str.c_str(), "true") == 0)
-        return true;
-    if (stricmp(str.c_str(), "false") == 0)
-        return false;
-    auto ret = try_to_long(str);
-    if (!ret.has_value())
-        return {};
-    return (ret.value() != 0);
-}
+struct try_to_bool<std::string> {
+    std::optional<bool> operator()(std::string const& value)
+    {
+        if (stricmp(value.c_str(), "true") == 0)
+            return true;
+        if (stricmp(value.c_str(), "false") == 0)
+            return false;
+        auto ret = try_to_long<std::string>()(value);
+        if (!ret.has_value())
+            return {};
+        return (ret.value() != 0);
+    }
+};
 
 template <typename T=std::string>
-inline bool to_bool(T const& str)
+inline bool to_bool(T const& value)
 {
-    auto ret = try_to_bool(str);
+    auto ret = try_to_bool<T>()(value);
     assert(ret.has_value());
     return ret.value();
 }

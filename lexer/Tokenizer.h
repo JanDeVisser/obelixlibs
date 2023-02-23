@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-//
-// Created by Jan de Visser on 2021-09-20.
-//
-
 #pragma once
 
 #include <functional>
@@ -25,11 +21,7 @@
 
 namespace Obelix {
 
-#define SCANNER_CONFIG_SEPARATORS ",.;"
-#define PARAM_PRIORITY "priority"
-#define PARAM_CONFIGURATION "configuration"
-
-extern LoggingCategory lexer_logger;
+extern_logging_category(lexer);
 
 #define ENUMERATE_TOKENIZER_STATES(S) \
     S(NoState)                        \

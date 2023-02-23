@@ -68,22 +68,28 @@ std::string ErrorCode_name(ErrorCode);
 std::string ErrorCode_message(ErrorCode);
 
 template <>
-inline std::string to_string(ErrorCode val)
-{
-    return ErrorCode_name(val);
-}
+struct to_string<ErrorCode> {
+    std::string operator()(ErrorCode value)
+    {
+        return ErrorCode_name(value);
+    }
+};
 
 template <>
-inline std::optional<double> try_to_double(ErrorCode val)
-{
-    return static_cast<double>(val);
-}
+struct try_to_double<ErrorCode> {
+    std::optional<double> operator()(ErrorCode value)
+    {
+        return static_cast<double>(value);
+    }
+};
 
 template <>
-inline std::optional<long> try_to_long(ErrorCode val)
-{
-    return static_cast<long>(val);
-}
+struct try_to_long<ErrorCode> {
+    std::optional<long> operator()(ErrorCode value)
+    {
+        return static_cast<long>(value);
+    }
+};
 
 class SystemError {
 public:

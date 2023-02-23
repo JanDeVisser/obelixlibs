@@ -18,10 +18,12 @@ namespace Obelix {
 namespace fs=std::filesystem;
 
 template <>
-inline std::string to_string(fs::path value)
-{
-    return value.string();
-}
+struct to_string<fs::path> {
+    std::string operator()(fs::path const& value)
+    {
+        return value.string();
+    }
+};
 
 class BufferLocator {
 public:

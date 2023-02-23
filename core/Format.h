@@ -103,7 +103,7 @@ public:
         switch (m_type) {
         case FormatSpecifierType::Default:
         case FormatSpecifierType::String:
-            return format_string(to_string<T>(arg));
+            return format_string(to_string<T>()(arg));
         case FormatSpecifierType::Int:
         case FormatSpecifierType::Character:
             return format_long(to_long<T>(arg));
@@ -465,7 +465,7 @@ std::pair<std::string,std::string> format_one(std::string const& fmt, T arg)
 {
     std::optional<FormatSpecifier> specifier_maybe = FormatSpecifier::first_specifier(fmt);
     if (!specifier_maybe.has_value()) {
-        auto a = to_string<T>(arg);
+        auto a = to_string<T>()(arg);
         fprintf(stderr, "format(\"%s\", \"%s\", ...): Not enough format specifiers\n", fmt.c_str(), a.c_str());
         exit(1);
     }
