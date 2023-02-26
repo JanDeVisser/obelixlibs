@@ -55,6 +55,7 @@ namespace Obelix {
     S(UntypedParameter, "Parameter '{}' has no return type")                                  \
     S(UntypedVariable, "Variable '{}' is untyped")                                            \
     S(VariableAlreadyDeclared, "Variable '{}' is already declared")                           \
+    S(IntegerOverflow, "Overflow")                                                            \
     S(ZZLast, "Don't use me")
 
 enum class ErrorCode {

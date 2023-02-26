@@ -1,6 +1,7 @@
 add_library(
         oblcore
         STATIC
+        Checked.h
         Error.cpp
         FileBuffer.cpp
         Format.h
