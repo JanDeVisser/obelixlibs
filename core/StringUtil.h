@@ -320,12 +320,18 @@ struct try_to_long<std::vector<T>> {
     }
 };
 
-template <typename T=std::string>
-long to_long(T value)
+template <typename T, std::signed_integral Int>
+Int to_int(T const& value)
 {
     auto ret = try_to_long<T>()(value);
     assert(ret.has_value());
     return ret.value();
+}
+
+template <typename T=std::string>
+long to_long(T const& value)
+{
+    return to_int<T, long>(value);
 }
 
 // -- to_ulong --------------------------------------------------------------
@@ -377,12 +383,18 @@ struct try_to_ulong<Float> {
     }
 };
 
-template <typename T=std::string>
-inline unsigned long to_ulong(T value)
+template <typename T, std::unsigned_integral Int>
+Int to_uint(T const& value)
 {
-    auto ret = try_to_ulong(value);
+    auto ret = try_to_ulong<T>()(value);
     assert(ret.has_value());
     return ret.value();
+}
+
+template <typename T=std::string>
+inline unsigned long to_ulong(T const& value)
+{
+    return to_uint<T, unsigned long>(value);
 }
 
 // -- to_double -------------------------------------------------------------
