@@ -31,7 +31,8 @@ public:
     void assign(char const* buffer, std::string file_name={}, bool take_ownership=false);
     void assign(std::string buffer, std::string = {});
     void assign(StringBuffer&& buffer, std::string = {});
-    [[nodiscard]] StringBuffer const& buffer() const;
+    void assign(std::shared_ptr<StringBuffer> buffer, std::string = {});
+    [[nodiscard]] std::shared_ptr<StringBuffer> const& buffer() const;
     std::vector<Token> const& tokenize(char const* buffer=nullptr, std::string file_name={}, bool take_ownership=false);
     [[nodiscard]] std::vector<Token> const& tokens() const;
     void invalidate();
@@ -59,7 +60,7 @@ public:
 
 private:
     std::string m_file_name;
-    std::unique_ptr<StringBuffer> m_buffer;
+    std::shared_ptr<StringBuffer> m_buffer;
     std::vector<Token> m_tokens {};
     size_t m_current { 0 };
     std::vector<size_t> m_bookmarks {};

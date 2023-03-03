@@ -40,13 +40,12 @@ public:
     [[nodiscard]] ErrorOr<fs::path, SystemError> locate(std::string const&) const override;
 };
 
-
 class FileBuffer : public StringBuffer {
 public:
     FileBuffer(fs::path, char const*, bool = false);
-    static ErrorOr<FileBuffer*, SystemError> from_file(std::string const&, BufferLocator* = nullptr);
+    static ErrorOr<std::shared_ptr<FileBuffer>, SystemError> from_file(std::string const&, BufferLocator* = nullptr);
 
-    fs::path const& file_path() const { return m_path; }
+    [[nodiscard]] fs::path const& file_path() const { return m_path; }
 private:
     fs::path m_path;
 };

@@ -17,9 +17,13 @@ public:
 
     explicit BasicParser(StringBuffer& src);
     explicit BasicParser();
-    [[nodiscard]] std::string text() const { return m_lexer.buffer().str(); }
+    virtual ~BasicParser() = default;
+
+    [[nodiscard]] std::string text() const { return m_lexer.buffer()->str(); }
+    [[nodiscard]] std::shared_ptr<StringBuffer> const& buffer() const { return m_lexer.buffer(); }
     ErrorOr<void,SystemError> read_file(std::string const&, BufferLocator* locator = nullptr);
-    void assign(StringBuffer const&);
+    void assign(StringBuffer&&);
+    void assign(std::shared_ptr<StringBuffer>);
     void assign(std::string const&);
     void assign(std::vector<std::string> const&);
     [[nodiscard]] std::vector<SyntaxError> const& errors() const { return m_errors; };
@@ -32,7 +36,7 @@ public:
     Token const& lex();
     Token const& replace(Token);
     std::optional<Token const> match(TokenCode, char const* = nullptr);
-    std::optional<Token const> skip(TokenCode);
+    Token const& skip(TokenCode);
     bool expect(TokenCode, char const* = nullptr);
     bool expect(char const*, char const* = nullptr);
     void add_error(Token const& token, std::string const& message) { add_error(token.location(), message); }

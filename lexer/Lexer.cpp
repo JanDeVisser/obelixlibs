@@ -47,12 +47,18 @@ void Lexer::assign(std::string text, std::string file_name)
 void Lexer::assign(StringBuffer&& buffer, std::string file_name)
 {
     m_file_name = std::move(file_name);
-    m_buffer = std::make_unique<StringBuffer>(buffer);
+    m_buffer = std::make_shared<StringBuffer>(buffer);
 }
 
-StringBuffer const& Lexer::buffer() const
+void Lexer::assign(std::shared_ptr<StringBuffer> buffer, std::string file_name)
 {
-    return *m_buffer;
+    m_file_name = std::move(file_name);
+    m_buffer = std::move(buffer);
+}
+
+std::shared_ptr<StringBuffer> const& Lexer::buffer() const
+{
+    return m_buffer;
 }
 
 std::vector<Token> const& Lexer::tokenize(char const* text, std::string file_name, bool take_ownership)

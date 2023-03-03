@@ -38,9 +38,14 @@ ErrorOr<void,SystemError> BasicParser::read_file(std::string const& file_name, B
     return {};
 }
 
-void BasicParser::assign(StringBuffer const& src)
+void BasicParser::assign(StringBuffer&& src)
 {
-    m_lexer.assign(src.str(), m_file_name);
+    m_lexer.assign(std::move(src), m_file_name);
+}
+
+void BasicParser::assign(std::shared_ptr<StringBuffer> src)
+{
+    m_lexer.assign(std::move(src), m_file_name);
 }
 
 void BasicParser::assign(std::string const& src)
@@ -123,14 +128,12 @@ std::optional<Token const> BasicParser::match(TokenCode code, char const* where)
     return lex();
 }
 
-std::optional<Token const> BasicParser::skip(TokenCode code)
+Token const& BasicParser::skip(TokenCode code)
 {
     debug(lexer, "Parser::skip({})", TokenCode_name(code));
-    auto token = peek();
-    if (token.code() != code) {
-        return {};
-    }
-    return lex();
+    while (current_code() == code)
+        lex();
+    return peek();
 }
 
 bool BasicParser::expect(TokenCode code, char const* where)

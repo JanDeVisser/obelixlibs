@@ -51,7 +51,7 @@ FileBuffer::FileBuffer(fs::path path, char const* text, bool take_ownership)
 {
 }
 
-ErrorOr<FileBuffer*, SystemError> FileBuffer::from_file(std::string const& file_name, BufferLocator* locator)
+ErrorOr<std::shared_ptr<FileBuffer>, SystemError> FileBuffer::from_file(std::string const& file_name, BufferLocator* locator)
 {
     static SimpleBufferLocator s_simple_locator;
     if (locator == nullptr)
@@ -86,8 +86,7 @@ ErrorOr<FileBuffer*, SystemError> FileBuffer::from_file(std::string const& file_
         return SystemError { ErrorCode::IOError, "Error reading '{}'", full_file_name };
     }
     buffer[size] = '\0';
-    auto ret = new FileBuffer(full_file_name, buffer, true);
-    return ret;
+    return std::make_shared<FileBuffer>(full_file_name, buffer, true);
 }
 
 }
