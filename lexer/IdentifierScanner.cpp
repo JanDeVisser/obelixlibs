@@ -14,7 +14,7 @@ IdentifierScanner::IdentifierScanner()
 }
 
 IdentifierScanner::IdentifierScanner(Config config)
-    : Scanner()
+    : Scanner(15)
     , m_config(std::move(config))
 {
 }
