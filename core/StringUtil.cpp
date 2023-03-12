@@ -151,6 +151,14 @@ std::vector<std::pair<std::string, std::string>> parse_pairs(std::string const& 
     return ret;
 }
 
+std::string dequote(std::string const& str, char quote)
+{
+    auto s = strip(str);
+    if (!s.empty() && s.starts_with(quote) && s.ends_with(quote))
+        s = s.substr(1, s.length()-2);
+    return s;
+}
+
 unsigned long parse_binary(char const* str, char** end)
 {
     unsigned long ret = 0;

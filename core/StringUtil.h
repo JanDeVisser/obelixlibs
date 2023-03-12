@@ -28,6 +28,7 @@ std::string strip(std::string const& s);
 std::string rstrip(std::string const& s);
 std::string lstrip(std::string const& s);
 std::vector<std::pair<std::string, std::string>> parse_pairs(std::string const& s, char pair_sep = ';', char name_value_sep = '=');
+std::string dequote(std::string const& s, char = '"');
 
 template<typename ElementType, typename ToString>
 inline std::string join(std::vector<ElementType> const& collection, std::string const& sep, ToString const& tostring)
