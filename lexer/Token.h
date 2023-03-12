@@ -4,14 +4,11 @@
  * SPDX-License-Identifier: MIT
  */
 
-//
-// Created by Jan de Visser on 2021-09-18.
-//
-
 #pragma once
 
 #include <cstring>
 #include <optional>
+#include <set>
 #include <string>
 
 #include <core/Error.h>
@@ -193,7 +190,7 @@ enum class TokenCode : int {
 constexpr TokenCode TokenCode_by_char(int ch)
 {
 #undef ENUM_TOKEN_CODE
-#define ENUM_TOKEN_CODE(code, c, str)                                    \
+#define ENUM_TOKEN_CODE(code, c, str)                                           \
     {                                                                           \
         if (c != nullptr) {                                                     \
             char const* c_str = c;                                              \
@@ -210,7 +207,7 @@ constexpr TokenCode TokenCode_by_char(int ch)
 inline TokenCode TokenCode_by_string(char const* str)
 {
 #undef ENUM_TOKEN_CODE
-#define ENUM_TOKEN_CODE(code, c, s)   \
+#define ENUM_TOKEN_CODE(code, c, s)          \
     {                                        \
         if (c != nullptr) {                  \
             char const* c_str = c;           \
@@ -275,20 +272,27 @@ struct Location {
 };
 
 struct Span {
-    std::string& file_name;
+    std::string_view file_name = {};
     Location start;
     Location end;
 
-    Span();
-    Span(std::string&, Location, Location);
-    Span(std::string&, size_t, size_t, size_t, size_t);
+    Span() = default;
+    Span(std::string_view, Location, Location);
+    Span(std::string_view, size_t, size_t, size_t, size_t);
+    Span(char const*, Location, Location);
+    Span(char const*, size_t, size_t, size_t, size_t);
+    Span(std::string const&, Location, Location);
+    Span(std::string const&, size_t, size_t, size_t, size_t);
 
     [[nodiscard]] std::string to_string() const;
     [[nodiscard]] Span merge(Span const&) const;
     [[nodiscard]] bool empty() const;
 
-    Span& operator=(Span const& other);
+    Span& operator=(Span const& other) = default;
     bool operator==(Span const& other) const;
+
+private:
+    static std::set<std::string> s_files;
 };
 
 class Token {
@@ -306,7 +310,7 @@ public:
     {
     }
 
-    Token(Span location, TokenCode code, std::string value)
+    Token(Span location, TokenCode code, std::string const& value)
         : m_location(location)
         , m_code(code)
     {

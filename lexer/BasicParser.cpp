@@ -61,7 +61,7 @@ void BasicParser::assign(std::vector<std::string> const& src)
 }
 
 
-static std::string s_dummy = "[dummy]";
+static const char* s_dummy = "[dummy]";
 static Token s_eof(Span { s_dummy, 0, 0, 0, 0 }, TokenCode::EndOfFile, "EOF triggered by lexer error");
 
 std::vector<Token> const& BasicParser::tokens() const

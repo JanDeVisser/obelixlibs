@@ -41,25 +41,58 @@ std::string Location::to_string() const
     return format("{}:{}", line, column);
 }
 
-static std::string s_empty = "";
+std::set<std::string> Span::s_files;
 
-Span::Span()
-    : file_name(s_empty)
-{
-}
-
-Span::Span(std::string& fname, Location loc_1, Location loc_2)
+Span::Span(std::string_view fname, Location loc_1, Location loc_2)
     : file_name(fname)
     , start(loc_1)
     , end(loc_2)
 {
 }
 
-Span::Span(std::string& fname, size_t line_1, size_t col_1, size_t line_2, size_t col_2)
+Span::Span(std::string_view fname, size_t line_1, size_t col_1, size_t line_2, size_t col_2)
     : file_name(fname)
     , start({ line_1, col_1 })
     , end({ line_2, col_2 })
 {
+}
+
+Span::Span(char const* fname, Location loc_1, Location loc_2)
+    : file_name(fname)
+    , start(loc_1)
+    , end(loc_2)
+{
+}
+
+Span::Span(char const* fname, size_t line_1, size_t col_1, size_t line_2, size_t col_2)
+    : file_name(fname)
+    , start({ line_1, col_1 })
+    , end({ line_2, col_2 })
+{
+}
+
+Span::Span(std::string const& fname, Location loc_1, Location loc_2)
+    : start(loc_1)
+    , end(loc_2)
+{
+    if (!s_files.contains(fname)) {
+        s_files.emplace(fname);
+    }
+    auto it = s_files.find(fname);
+    assert(it != s_files.end());
+    file_name = *it;
+}
+
+Span::Span(std::string const& fname, size_t line_1, size_t col_1, size_t line_2, size_t col_2)
+    : start({ line_1, col_1 })
+    , end({ line_2, col_2 })
+{
+    if (!s_files.contains(fname)) {
+        s_files.emplace(fname);
+    }
+    auto it = s_files.find(fname);
+    assert(it != s_files.end());
+    file_name = *it;
 }
 
 std::string Span::to_string() const
@@ -78,14 +111,6 @@ std::string Span::to_string() const
     return start == end;
 }
 
-
-Span& Span::operator=(Span const& other)
-{
-    file_name = other.file_name;
-    start = other.start;
-    end = other.end;
-    return *this;
-}
 
 bool Span::operator==(Span const& other) const
 {
