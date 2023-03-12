@@ -118,6 +118,8 @@ std::optional<Token const> BasicParser::match(TokenCode code, char const* where)
 {
     debug(lexer, "Parser::match({})", TokenCode_name(code));
     auto token = peek();
+    if (token.code() == TokenCode::EndOfFile)
+        return {};
     if (token.code() != code) {
         if (where)
             add_error(token, "Expected '{}' {}, got '{}' ({})", TokenCode_name(code), where, token.value());
@@ -140,6 +142,8 @@ bool BasicParser::expect(TokenCode code, char const* where)
 {
     debug(lexer, "Parser::expect({})", TokenCode_name(code));
     auto token = peek();
+    if (token.code() == TokenCode::EndOfFile)
+        return false;
     if (token.code() != code) {
         if (where)
             add_error(token, "Expected '{}' {}, got '{}' ({})", TokenCode_to_string(code), where, token.value(), token.code_name());
@@ -155,6 +159,8 @@ bool BasicParser::expect(char const* expected, char const* where)
 {
     debug(lexer, "Parser::expect({})", expected);
     auto token = peek();
+    if (token.code() == TokenCode::EndOfFile)
+        return false;
     if (strcmp(token.value().data(), expected)) {
         if (where)
             add_error(token, "Expected '{}' {}, got '{}' ({})", expected, where, token.value(), token.code_name());
