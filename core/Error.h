@@ -156,6 +156,7 @@ public:
 
     [[nodiscard]] bool has_value() const { return m_value.has_value(); }
     ReturnType const& value() const { return m_value.value(); }
+    ReturnType const& operator*() { return value(); }
     [[nodiscard]] bool is_error() const { return m_error.has_value(); }
     ErrorType const& error() const { return m_error.value(); }
 
