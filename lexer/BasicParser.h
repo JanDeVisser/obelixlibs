@@ -36,7 +36,6 @@ public:
     Token const& lex();
     Token const& replace(Token);
     std::optional<Token const> match(TokenCode, char const* = nullptr);
-    Token const& skip(TokenCode);
     bool expect(TokenCode, char const* = nullptr);
     bool expect(char const*, char const* = nullptr);
     void add_error(Token const& token, std::string const& message) { add_error(token.location(), message); }
@@ -54,6 +53,25 @@ public:
     void add_error(Token const& token, std::string message, Args&&... args)
     {
         add_error(token, format(message, std::forward<Args>(args)...));
+    }
+
+    template <typename ...Code>
+    bool matches(TokenCode code_1, Code&&... codes)
+    {
+        return (current_code() == code_1 || matches(std::forward<Code>(codes)...));
+    }
+
+    bool matches(TokenCode code)
+    {
+        return current_code() == code;
+    }
+
+    template <typename ...Code>
+    Token const& skip(Code&&... codes)
+    {
+        while (matches(std::forward<Code>(codes)...))
+            lex();
+        return peek();
     }
 
 protected:

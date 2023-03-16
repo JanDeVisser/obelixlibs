@@ -130,14 +130,6 @@ std::optional<Token const> BasicParser::match(TokenCode code, char const* where)
     return lex();
 }
 
-Token const& BasicParser::skip(TokenCode code)
-{
-    debug(lexer, "Parser::skip({})", TokenCode_name(code));
-    while (current_code() == code)
-        lex();
-    return peek();
-}
-
 bool BasicParser::expect(TokenCode code, char const* where)
 {
     debug(lexer, "Parser::expect({})", TokenCode_name(code));
