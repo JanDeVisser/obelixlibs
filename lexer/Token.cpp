@@ -13,9 +13,9 @@ std::string TokenCode_name(TokenCode t)
     switch (t) {
 #undef ENUM_TOKEN_CODE
 #define ENUM_TOKEN_CODE(code, c, str) \
-    case TokenCode::code:                    \
-        if (str != nullptr)                  \
-            return str;                      \
+    case TokenCode::code:             \
+        if (str != nullptr)           \
+            return str;               \
         return #code;
         ENUMERATE_TOKEN_CODES(ENUM_TOKEN_CODE)
 #undef ENUM_TOKEN_CODE
@@ -110,7 +110,6 @@ std::string Span::to_string() const
 {
     return start == end;
 }
-
 
 bool Span::operator==(Span const& other) const
 {

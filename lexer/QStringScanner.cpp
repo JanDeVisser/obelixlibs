@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-//
-// Created by Jan de Visser on 2021-10-05.
-//
+#include <array>
 
 #include <lexer/Tokenizer.h>
 
@@ -86,7 +84,18 @@ void QStringScanner::match(Tokenizer& tokenizer)
         }
     }
     if (!ch && ((m_state == QStrState::QString) || (m_state == QStrState::Escape))) {
-        tokenizer.accept(TokenCode::Error, "Unterminated string");
+        static std::array<std::pair<const char,const TokenCode>,3> unclosed_codes {
+            std::pair<const char,const TokenCode> { '"', TokenCode::UnclosedDoubleQuotedString },
+            { '\'', TokenCode::UnclosedSingleQuotedString },
+            { '`', TokenCode::UnclosedBackQuotedString },
+        };
+        TokenCode code = TokenCode::Unknown;
+        for (auto const& pair : unclosed_codes) {
+            if (pair.first == m_quote)
+                code = pair.second;
+        }
+        assert(code != TokenCode::Unknown);
+        tokenizer.accept(code);
     }
 }
 
