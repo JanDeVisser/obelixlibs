@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "lexer/Token.h"
+#include <lexer/Token.h>
 #include <lexer/Tokenizer.h>
 
 namespace Obelix {
