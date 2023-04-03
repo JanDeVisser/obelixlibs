@@ -211,6 +211,14 @@ struct to_string<char[N]> {
     }
 };
 
+template<>
+struct to_string<char> {
+    std::string operator()(char value)
+    {
+        return { value };
+    }
+};
+
 template <std::integral T>
 struct to_string<T> {
     std::string operator()(T value)
