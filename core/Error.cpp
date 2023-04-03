@@ -53,7 +53,7 @@ SystemError::SystemError(ErrorCode code, std::string msg)
 std::string SystemError::to_string() const
 {
     if (m_errno != 0)
-        return format("[{}] {}: {}", m_code, m_message, strerror(m_errno));
+        return format("[{}] {}: {} ({})", m_code, m_message, strerror(m_errno), m_errno);
     return format("[{}] {}", m_code, m_message);
 }
 
