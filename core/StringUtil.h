@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <cxxabi.h>
 #include <map>
 #include <optional>
 #include <string>
@@ -278,6 +279,21 @@ struct to_string<std::vector<T>> {
         return join(value, ", ", [](T elem) { return to_string<T>()(elem); });
     }
 };
+
+template <>
+struct to_string<std::type_info> {
+    std::string operator()(std::type_info const& value)
+    {
+        int status;
+        auto realname = abi::__cxa_demangle(value.name(), 0, 0, &status);
+        std::string ret { value.name() };
+        if (!status)
+            ret = realname;
+        free(realname);
+        return ret;
+    }
+};
+
 
 // -- to_long ---------------------------------------------------------------
 

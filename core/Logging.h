@@ -65,7 +65,7 @@ public:
     void set_file(std::string const&);
 
     template<typename... Args>
-    void logmsg(LogMessage const& msg, Args&&... args)
+    void logmsg(LogMessage const& msg, Args const&... args)
     {
         if (msg.level == LogLevel::Debug && !DEBUG)
             return;
@@ -93,7 +93,7 @@ public:
             auto file_line = format("{s}:{d}", f, msg.line);
             auto prefix = format("{<24s}:{<20s}:{<5s}:", file_line, msg.function, LogLevel_name(msg.level));
             fprintf(m_destination, "%s", prefix.c_str());
-            auto message = format(msg.message, std::forward<Args>(args)...);
+            auto message = format(msg.message, std::forward<Args const&>(args)...);
             fprintf(m_destination, "%s\n", message.c_str());
             if (m_destination != stderr)
                 fflush(m_destination);
@@ -108,18 +108,18 @@ public:
     }
 
     template<typename... Args>
-    [[noreturn]] void fatal_msg(std::string_view const& file, size_t line, std::string_view const& function, char const* message, Args&&... args)
+    [[noreturn]] void fatal_msg(std::string_view const& file, size_t line, std::string_view const& function, char const* message, Args const&... args)
     {
-        logmsg({ file, line, function, LogLevel::Fatal, message }, std::forward<Args>(args)...);
+        logmsg({ file, line, function, LogLevel::Fatal, message }, std::forward<Args const&>(args)...);
         abort();
     }
 
     template<typename... Args>
-    void assert_msg(std::string_view const& file, size_t line, std::string_view const& function, bool condition, char const* message, Args&&... args)
+    void assert_msg(std::string_view const& file, size_t line, std::string_view const& function, bool condition, char const* message, Args const&... args)
     {
         if (condition)
             return;
-        logmsg({ file, line, function, LogLevel::Fatal, message }, std::forward<Args>(args)...);
+        logmsg({ file, line, function, LogLevel::Fatal, message }, std::forward<Args const&>(args)...);
         abort();
     }
     static Logger& get_logger();
