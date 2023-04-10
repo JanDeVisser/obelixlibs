@@ -8,6 +8,7 @@
 
 #include <condition_variable>
 #include <deque>
+#include <iostream>
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -40,7 +41,7 @@ public:
     ErrorOr<void,SystemError> create();
     virtual void connect_parent() = 0;
     virtual void connect_child(int) = 0;
-    void close();
+    virtual void close();
     [[nodiscard]] int fd() const { return m_fd; }
 
 protected:
@@ -50,20 +51,28 @@ protected:
 
 class ReadPipe : public Pipe {
 public:
+    ReadPipe(std::string name)
+        : m_name(std::move(name))
+    {
+    }
+
     ~ReadPipe();
     void connect_parent() override;
     void connect_child(int) override;
+    void close() override;
     void read();
     std::vector<std::string> lines();
     void expect();
 
 private:
     void drain();
+    void newline();
 
+    std::string m_name;
+    std::string m_current;
     std::deque<std::string> m_lines;
     std::mutex m_lock;
     std::condition_variable m_condition;
-    std::thread* m_thread;
 };
 
 class WritePipe : public Pipe {
@@ -100,6 +109,19 @@ public:
     ErrorOr<int,SystemError> write(std::string_view const&);
     ErrorOr<int,SystemError> write(uint8_t const*, size_t);
 
+    template <typename... Args>
+    static void log(std::string const& fmt, Args&& ...args)
+    {
+        std::unique_lock lock(s_debug_lock);
+        std::string msg;
+        if constexpr (sizeof...(Args) > 0) {
+            msg = format(fmt, std::forward<Args&&>(args)...);
+        } else {
+            msg = fmt;
+        }
+        std::cout << msg << "\n";
+    }
+
 private:
     ErrorOr<void,SystemError> start();
 
@@ -117,11 +139,11 @@ private:
     std::string m_command;
     std::vector<std::string> m_arguments = {};
     pid_t m_pid { 0 };
-    bool m_log { false };
     WritePipe m_stdin;
-    ReadPipe m_stdout;
-    ReadPipe m_stderr;
+    ReadPipe m_stdout { "O" };
+    ReadPipe m_stderr { "E" };
     std::mutex m_lock;
+    static std::mutex s_debug_lock;
 };
 
 }

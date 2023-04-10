@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <csignal>
 #include <cstring>
 #include <iostream>
 #include <poll.h>
-#include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -19,6 +17,8 @@ namespace Obelix {
 
 constexpr int PipeEndRead = 0;
 constexpr int PipeEndWrite = 1;
+
+std::mutex Process::s_debug_lock;
 
 Pipe::~Pipe()
 {
@@ -40,12 +40,6 @@ void Pipe::close()
     m_fd = -1;
 }
 
-void pipe_thread(void *p)
-{
-    auto pipe = static_cast<ReadPipe*>(p);
-    pipe->read();
-}
-
 ReadPipe::~ReadPipe()
 {
 }
@@ -55,9 +49,8 @@ void ReadPipe::connect_parent()
     m_fd = m_pipe[PipeEndRead];
     ::close(m_pipe[PipeEndWrite]);
     fcntl(m_fd, F_SETFL, O_NONBLOCK);
-    m_thread = new std::thread(&ReadPipe::read, this);
-    m_thread->detach();
-    delete m_thread;
+    std::thread thread { &ReadPipe::read, this };
+    thread.detach();
 }
 
 void ReadPipe::connect_child(int fd)
@@ -65,6 +58,14 @@ void ReadPipe::connect_child(int fd)
     while ((dup2(m_pipe[PipeEndWrite], fd) == -1) && (errno == EINTR)) { }
     ::close(m_pipe[PipeEndRead]);
     ::close(m_pipe[PipeEndWrite]);
+}
+
+void ReadPipe::close()
+{
+    if (!m_current.empty())
+        newline();
+    m_condition.notify_all();
+    Pipe::close();
 }
 
 void ReadPipe::read()
@@ -75,8 +76,10 @@ void ReadPipe::read()
 
     while (true) {
         if (poll(&poll_fd, 1, 0) == -1) {
-//            if (errno == EINTR)
-//                continue;
+            if (errno == EINTR) {
+                std::cerr << "poll(stdin, stdout) interrupted: " << strerror(errno) << "\n";
+                continue;
+            }
             std::cerr << "poll(stdin, stdout) failed: " << strerror(errno) << "\n";
             break;
         }
@@ -88,18 +91,13 @@ void ReadPipe::read()
 
 void ReadPipe::drain()
 {
-    std::lock_guard<std::mutex> lock(m_lock);
     uint8_t buffer[4096];
-    std::string current;
+    std::lock_guard<std::mutex> lock(m_lock);
     for (auto count = ::read(m_fd, buffer, sizeof(buffer) - 1); count != 0; count = ::read(m_fd, buffer, sizeof(buffer) - 1)) {
         if (count > 0) {
             bool prev_was_cr { false };
             for (auto ix = 0u; ix < count; ++ix) {
                 auto ch = static_cast<char>(buffer[ix]);
-                auto newline = [&current,this]() {
-                    m_lines.push_back(std::move(current));
-                    current.clear();
-                };
                 switch (ch) {
                 case '\r':
                     newline();
@@ -112,7 +110,7 @@ void ReadPipe::drain()
                     prev_was_cr = true;
                     break;
                 default:
-                    current += ch;
+                    m_current += ch;
                     prev_was_cr = false;
                 }
             }
@@ -130,19 +128,24 @@ void ReadPipe::drain()
         }
     }
 exit_loop:
-    if (!current.empty())
-        m_lines.push_back(std::move(current));
+    if (!m_current.empty())
+        newline();
     m_condition.notify_all();
-};
+}
+
+void ReadPipe::newline()
+{
+    Process::log("<- {} | {}", m_name, m_current);
+    m_lines.emplace_back(std::move(m_current));
+    m_current.clear();
+}
 
 std::vector<std::string> ReadPipe::lines()
 {
     std::lock_guard<std::mutex> const lock(m_lock);
     std::vector<std::string> ret;
-    std::cout << "<----[" << fd() << "]\n";
     while (!m_lines.empty()) {
         auto l = m_lines.front();
-        std::cout << l << "\n";
         ret.push_back(std::move(l));
         m_lines.pop_front();
     }
@@ -262,8 +265,7 @@ ErrorOr<void, SystemError> Process::start()
         strcpy(argv[ix + 1], m_arguments[ix].c_str());
     }
     argv[sz + 1] = nullptr;
-    if (m_log)
-        std::cout << format("[CMD] {} {}", m_command, join(m_arguments, ' ')) << '\n';
+    log(format("***  | {} {}", m_command, join(m_arguments, ' ')));
 
     ScopeGuard sg([&argv, &sz]() {
         for (auto ix = 0u; ix < sz; ++ix)
@@ -300,7 +302,7 @@ bool Process::running() const
 
 ErrorOr<int, SystemError> Process::write(std::string const& str)
 {
-    std::cout << "---->\n**" << str << "**\n";
+    log("-> I | {}", str);
     return m_stdin.write(str);
 }
 
@@ -313,5 +315,6 @@ ErrorOr<int, SystemError> Process::write(uint8_t const* buffer, size_t bytes)
 {
     return m_stdin.write(buffer, bytes);
 }
+
 
 }
