@@ -26,14 +26,12 @@ std::string TokenCode_name(TokenCode t)
 
 bool Location::operator==(Location const& other) const
 {
-    return line == other.line && column == other.column;
+    return index == other.index;
 }
 
 bool Location::operator<(Location const& other) const
 {
-    if (line == other.line)
-        return column < other.column;
-    return line < other.line;
+    return index < other.index;
 }
 
 std::string Location::to_string() const

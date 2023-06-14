@@ -17,7 +17,7 @@ ErrorOr<std::shared_ptr<BasicParser>,SystemError> BasicParser::create(std::strin
     return ret;
 }
 
-BasicParser::BasicParser(StringBuffer& src)
+BasicParser::BasicParser(StringBuffer const& src)
     : BasicParser()
 {
     m_lexer.assign(src.str());
@@ -49,6 +49,11 @@ void BasicParser::assign(std::shared_ptr<StringBuffer> src)
 }
 
 void BasicParser::assign(std::string const& src)
+{
+    m_lexer.assign(src, m_file_name);
+}
+
+void BasicParser::assign(std::string_view src)
 {
     m_lexer.assign(src, m_file_name);
 }

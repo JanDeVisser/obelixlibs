@@ -116,6 +116,15 @@ StringBuffer& StringBuffer::assign(StringBuffer buffer)
     return *this;
 }
 
+StringBuffer& StringBuffer::assign(std::string_view buffer)
+{
+    m_buffer_string = {};
+    m_char_buffer = {};
+    m_buffer = buffer;
+    m_pos = m_mark = 0;
+    return *this;
+}
+
 void StringBuffer::rewind()
 {
     m_pos = m_mark;

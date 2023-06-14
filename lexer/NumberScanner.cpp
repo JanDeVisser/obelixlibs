@@ -185,7 +185,7 @@ void NumberScanner::match(Tokenizer& tokenizer)
         code = process(tokenizer, ch);
     }
     if (m_state == NumberScannerState::Error) {
-        tokenizer.accept(TokenCode::Error, "Malformed number");
+5        tokenizer.accept(TokenCode::Error, "Malformed number");
     } else if (code != TokenCode::Unknown) {
         tokenizer.accept(code);
     }

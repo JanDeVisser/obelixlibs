@@ -15,7 +15,7 @@ class BasicParser {
 public:
     static ErrorOr<std::shared_ptr<BasicParser>,SystemError> create(std::string const& file_name, BufferLocator* locator = nullptr);
 
-    explicit BasicParser(StringBuffer& src);
+    explicit BasicParser(StringBuffer const& src);
     explicit BasicParser();
     virtual ~BasicParser() = default;
 
@@ -25,6 +25,7 @@ public:
     void assign(StringBuffer&&);
     void assign(std::shared_ptr<StringBuffer>);
     void assign(std::string const&);
+    void assign(std::string_view);
     void assign(std::vector<std::string> const&);
     [[nodiscard]] std::vector<SyntaxError> const& errors() const { return m_errors; };
     [[nodiscard]] bool has_errors() const { return !m_errors.empty(); }
@@ -82,6 +83,14 @@ private:
     std::string m_file_path;
     Lexer m_lexer;
     std::vector<SyntaxError> m_errors {};
+};
+
+class PlainTextParser : public BasicParser {
+public:
+    static ErrorOr<std::shared_ptr<PlainTextParser>,SystemError> create(std::string const& file_name, BufferLocator* locator = nullptr);
+
+    explicit PlainTextParser(StringBuffer const& src);
+    PlainTextParser();
 };
 
 }

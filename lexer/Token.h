@@ -266,6 +266,7 @@ struct try_to_long<TokenCode> {
 };
 
 struct Location {
+    size_t index { 0 };
     size_t line { 0 };
     size_t column { 0 };
 

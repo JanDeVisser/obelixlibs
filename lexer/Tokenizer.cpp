@@ -148,7 +148,7 @@ void Tokenizer::reset() {
     auto scanned = m_buffer.scanned_string();
     for (auto ix = 0u; ix < scanned.length(); ++ix) {
         auto ch = scanned[ix];
-        if (ch == '\r' & ix < scanned.length()-1 && scanned[ix+1] == '\n')
+        if (ch == '\r' && ix < scanned.length()-1 && scanned[ix+1] == '\n')
             ch = scanned[++ix];
         if (ch == '\n' || ch == '\r') {
             m_mark.line++;
@@ -157,6 +157,7 @@ void Tokenizer::reset() {
             m_mark.column++;
         }
     }
+    m_mark.index += scanned.length();
     m_buffer.reset();
     m_token_string.reset();
 }

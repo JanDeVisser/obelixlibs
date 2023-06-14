@@ -12,7 +12,7 @@ add_library(
         Tokenizer.cpp
         WhitespaceScanner.cpp
         CommentScanner.cpp
-)
+        PlainTextParser.cpp)
 
 target_link_libraries(
         obllexer

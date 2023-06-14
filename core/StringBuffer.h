@@ -48,6 +48,7 @@ public:
     StringBuffer& assign(char const* buffer, bool take_ownership=false);
     StringBuffer& assign(std::string);
     StringBuffer& assign(StringBuffer);
+    StringBuffer& assign(std::string_view);
 
 private:
     std::optional<std::string> m_buffer_string {};

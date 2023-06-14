@@ -171,7 +171,7 @@ private:
     std::vector<Token>* m_tokens { nullptr };
     int m_current { 0 };
     std::string m_file_name;
-    Location m_mark { 1, 1 };
+    Location m_mark { 0, 1, 1 };
     std::shared_ptr<Scanner> m_current_scanner;
     std::shared_ptr<Scanner> m_locked_scanner { nullptr };
 };

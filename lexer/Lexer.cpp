@@ -56,6 +56,12 @@ void Lexer::assign(std::shared_ptr<StringBuffer> buffer, std::string file_name)
     m_buffer = std::move(buffer);
 }
 
+void Lexer::assign(std::string_view buffer, std::string file_name)
+{
+    m_file_name = std::move(file_name);
+    m_buffer = std::make_shared<StringBuffer>(buffer);
+}
+
 std::shared_ptr<StringBuffer> const& Lexer::buffer() const
 {
     return m_buffer;

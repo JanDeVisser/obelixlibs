@@ -30,6 +30,7 @@ public:
 
     void assign(char const* buffer, std::string file_name={}, bool take_ownership=false);
     void assign(std::string buffer, std::string = {});
+    void assign(std::string_view buffer, std::string file_name={});
     void assign(StringBuffer&& buffer, std::string = {});
     void assign(std::shared_ptr<StringBuffer> buffer, std::string = {});
     [[nodiscard]] std::shared_ptr<StringBuffer> const& buffer() const;
